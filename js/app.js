@@ -37,9 +37,58 @@
     }
 
     setupIframeResizer() {
+      // Setup full-screen launcher links regardless of embedding state
+      const currentUrl = window.location.href;
+      const fsLink = document.getElementById('linkOpenFullscreen');
+      const fsBtn = document.getElementById('btnHeaderFullscreen');
+      if (fsLink) fsLink.href = currentUrl;
+      if (fsBtn) fsBtn.href = currentUrl;
+
       if (window.self === window.top) return;
       document.documentElement.classList.add('is-embedded');
+      document.body.classList.add('is-embedded-body');
 
+      // Trusted Parent Origin management (Phase 1: origin validation)
+      let trustedParentOrigin = null;
+
+      const isAllowedOrigin = (origin) => {
+        if (!origin || typeof origin !== 'string') return false;
+        try {
+          const url = new URL(origin);
+          const host = url.hostname.toLowerCase();
+          return (
+            host.endsWith('.squarespace.com') ||
+            host === 'squarespace.com' ||
+            host.endsWith('.cloudscoutstudio.com') ||
+            host === 'cloudscoutstudio.com' ||
+            host === 'localhost' ||
+            host === '127.0.0.1' ||
+            (document.referrer && origin === new URL(document.referrer).origin)
+          );
+        } catch (e) {
+          return false;
+        }
+      };
+
+      if (document.referrer) {
+        try {
+          const refOrigin = new URL(document.referrer).origin;
+          if (isAllowedOrigin(refOrigin)) {
+            trustedParentOrigin = refOrigin;
+          }
+        } catch (e) {}
+      }
+
+      // Check query param e.g. ?parentOrigin=https://cloudscoutstudio.com
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramOrigin = urlParams.get('parentOrigin');
+        if (paramOrigin && isAllowedOrigin(paramOrigin)) {
+          trustedParentOrigin = paramOrigin;
+        }
+      } catch (e) {}
+
+      let lastSentHeight = 0;
       const postHeight = () => {
         try {
           const height = Math.max(
@@ -47,22 +96,57 @@
             document.documentElement.scrollHeight,
             document.body.offsetHeight
           );
-          window.parent.postMessage({
+
+          if (Math.abs(height - lastSentHeight) < 2) return;
+          lastSentHeight = height;
+
+          const payload = {
             type: 'clay-lens-lab:resize',
-            height: height
-          }, '*');
+            height: height,
+            timestamp: Date.now()
+          };
+
+          const targetOrigin = trustedParentOrigin || (document.referrer ? new URL(document.referrer).origin : '*');
+          window.parent.postMessage(payload, targetOrigin);
         } catch (e) {
-          // Cross-origin fallback
+          // Fallback
         }
       };
 
       this.postHeight = postHeight;
-      window.addEventListener('resize', postHeight);
+
+      // Listen for parent messages (handshake, resize request) with origin validation
+      window.addEventListener('message', (event) => {
+        if (!event.data || typeof event.data !== 'object') return;
+        if (!isAllowedOrigin(event.origin)) {
+          console.warn('Clay Lens Lab: Ignored postMessage from untrusted origin:', event.origin);
+          return;
+        }
+
+        // Lock verified parent origin
+        trustedParentOrigin = event.origin;
+
+        if (event.data.type === 'clay-lens-lab:handshake' || event.data.type === 'clay-lens-lab:request-height') {
+          postHeight();
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        postHeight();
+      });
 
       if (typeof ResizeObserver !== 'undefined') {
-        const ro = new ResizeObserver(() => postHeight());
+        const ro = new ResizeObserver(() => {
+          postHeight();
+        });
         ro.observe(document.body);
       }
+
+      // Send initial sizing pulses as fonts and resources load
+      postHeight();
+      setTimeout(postHeight, 150);
+      setTimeout(postHeight, 500);
+      setTimeout(postHeight, 1000);
     }
 
     async init() {
@@ -223,18 +307,21 @@
       const searchInput = document.getElementById('searchQuery');
       searchInput?.addEventListener('input', (e) => {
         this.filters.search = e.target.value;
+        this.updateActiveFiltersBadge();
         this.render();
       });
 
       const techSelect = document.getElementById('filterTech');
       techSelect?.addEventListener('change', (e) => {
         this.filters.tech = e.target.value;
+        this.updateActiveFiltersBadge();
         this.render();
       });
 
       const vltSelect = document.getElementById('filterVlt');
       vltSelect?.addEventListener('change', (e) => {
         this.filters.vlt = e.target.value;
+        this.updateActiveFiltersBadge();
         this.render();
       });
 
@@ -246,7 +333,49 @@
         } else {
           this.sort = { key: val, dir: 'desc' };
         }
+        this.updateActiveFiltersBadge();
         this.render();
+      });
+
+      // Personalize Collapsible Drawer Toggle
+      const btnTogglePersonalize = document.getElementById('btnTogglePersonalize');
+      const personalizeContent = document.getElementById('personalizeContent');
+      const caretPersonalize = document.getElementById('caretTogglePersonalize');
+      const textPersonalize = document.getElementById('textTogglePersonalize');
+
+      // Initialize collapsed on mobile (≤ 768px)
+      if (window.innerWidth <= 768 && personalizeContent) {
+        personalizeContent.classList.add('collapsed');
+        btnTogglePersonalize?.setAttribute('aria-expanded', 'false');
+        if (caretPersonalize) caretPersonalize.textContent = '▾';
+        if (textPersonalize) textPersonalize.textContent = 'Adjust Weights';
+      }
+
+      btnTogglePersonalize?.addEventListener('click', () => {
+        const isCollapsed = personalizeContent?.classList.toggle('collapsed');
+        const expanded = !isCollapsed;
+        btnTogglePersonalize.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        if (caretPersonalize) caretPersonalize.textContent = expanded ? '▴' : '▾';
+        if (textPersonalize) textPersonalize.textContent = expanded ? 'Hide Sliders' : 'Adjust Weights';
+        if (this.postHeight) {
+          requestAnimationFrame(() => this.postHeight());
+          setTimeout(() => this.postHeight(), 250);
+        }
+      });
+
+      // Advanced Filters Drawer Toggle (Mobile)
+      const btnToggleAdvanced = document.getElementById('btnToggleAdvancedFilters');
+      const advancedDrawer = document.getElementById('advancedFiltersDrawer');
+      const caretAdvanced = document.getElementById('caretAdvancedFilters');
+
+      btnToggleAdvanced?.addEventListener('click', () => {
+        const isOpen = advancedDrawer?.classList.toggle('open');
+        btnToggleAdvanced.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (caretAdvanced) caretAdvanced.textContent = isOpen ? '▴' : '▾';
+        if (this.postHeight) {
+          requestAnimationFrame(() => this.postHeight());
+          setTimeout(() => this.postHeight(), 250);
+        }
       });
 
       document.querySelectorAll('[data-mode]').forEach(btn => {
@@ -459,9 +588,35 @@
         }
       });
 
+      // Update preset summary badge in header
+      const summaryText = document.getElementById('presetSummaryText');
+      if (summaryText) {
+        const pLabel = this.activePreset && H.WEIGHT_PRESETS[this.activePreset] 
+          ? H.WEIGHT_PRESETS[this.activePreset].label 
+          : 'Custom';
+        summaryText.textContent = `Preset: ${pLabel} (${norm.sun.toFixed(0)}% Sun · ${norm.cloud.toFixed(0)}% Cloud · ${norm.brown.toFixed(0)}% Brown)`;
+      }
+
       const zeroWarning = document.getElementById('zeroWeightWarning');
       if (zeroWarning) {
         zeroWarning.style.display = norm.total === 0 ? 'block' : 'none';
+      }
+    }
+
+    updateActiveFiltersBadge() {
+      const badge = document.getElementById('activeFiltersBadge');
+      if (!badge) return;
+
+      let count = 0;
+      if (this.filters.tech) count++;
+      if (this.filters.vlt) count++;
+      if (this.sort.key !== 'composite') count++;
+
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
       }
     }
 

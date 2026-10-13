@@ -17,6 +17,20 @@
 </head>
 <body>
 
+  <!-- Top Full-Screen Fallback Banner (for embedded viewers on mobile) -->
+  <aside id="fullscreenBanner" class="fullscreen-banner" aria-label="Full-screen options">
+    <div class="container fullscreen-banner-inner">
+      <div class="fullscreen-banner-text">
+        <span class="fs-badge">Mobile View</span>
+        <span>For optimal touch controls and zero frame margins:</span>
+      </div>
+      <a href="#" id="linkOpenFullscreen" class="btn-open-fullscreen" target="_blank" rel="noopener noreferrer">
+        <span>Open Full-Screen Lens Explorer</span>
+        <span class="fs-arrow">↗</span>
+      </a>
+    </div>
+  </aside>
+
   <!-- Top Navigation & Branding Header -->
   <header class="app-header">
     <div class="container header-inner">
@@ -37,6 +51,9 @@
         <div class="header-disclaimer-badge" title="Independent educational resource published by CloudScout Studio; not affiliated with Pilla Sport or ZEISS">
           <span>🛡️ CloudScout Studio Independent Reference</span>
         </div>
+        <a href="#" id="btnHeaderFullscreen" class="btn btn-primary btn-sm btn-fullscreen-launch" target="_blank" rel="noopener noreferrer" title="Open Clay Lens Lab in a full-screen standalone browser tab">
+          <span>↗ Open Full-Screen</span>
+        </a>
         <button class="btn btn-secondary btn-sm" id="btnOpenMethodology" title="View calculation methodology, scoring logic, and data sources">
           <span>📖 Methodology & Sources</span>
         </button>
@@ -49,165 +66,195 @@
     <div class="container">
 
       <!-- Section 1: Personalize Your Rankings (User-Adjustable Weights) -->
-      <section class="panel personalize-panel" aria-labelledby="personalizeHeading">
-        <div class="panel-header">
-          <div>
+      <section class="panel personalize-panel" id="personalizeSection" aria-labelledby="personalizeHeading">
+        <div class="panel-header personalize-header">
+          <div class="personalize-title-group">
             <h2 id="personalizeHeading" class="panel-title">
               <span class="icon-badge">🎯</span>
               Personalize Your Rankings
             </h2>
-            <p class="panel-subtitle">
+            <div class="preset-summary-badge" id="presetSummaryBadge">
+              <span class="summary-dot">●</span>
+              <span id="presetSummaryText">Preset: Balanced (33% Sun · 33% Cloud · 34% Brown)</span>
+            </div>
+            <p class="panel-subtitle desktop-only-text">
               Adjust condition priorities to calculate a <strong>Personalized Heuristic Score</strong> (0.00 – 5.00) tailored to your typical range environments.
             </p>
           </div>
-          <button class="btn btn-ghost btn-sm" id="btnResetWeights" title="Reset weighting priorities to equal balance">
-            ↺ Reset Weights
-          </button>
-        </div>
-
-        <!-- 3 Weight Sliders -->
-        <div class="weights-grid">
-          <!-- Direct Sunshine -->
-          <div class="weight-card">
-            <div class="weight-header">
-              <label for="weightSlider_sun" class="weight-title">
-                <span>☀ Direct Sunshine</span>
-              </label>
-              <span class="weight-pct-badge" id="weightPct_sun">33.3%</span>
-            </div>
-            <div class="weight-slider-row">
-              <input type="range" id="weightSlider_sun" class="weight-slider" min="0" max="100" value="33" aria-label="Direct sunshine importance weight">
-              <input type="number" id="weightNum_sun" class="weight-number-input" min="0" max="100" value="33" aria-label="Direct sunshine numerical weight">
-            </div>
-            <p class="weight-desc">Prioritizes dark lenses (low VLT) that block glare and harsh overhead sun.</p>
-          </div>
-
-          <!-- Overcast Skies -->
-          <div class="weight-card">
-            <div class="weight-header">
-              <label for="weightSlider_cloud" class="weight-title">
-                <span>☁ Overcast Skies</span>
-              </label>
-              <span class="weight-pct-badge" id="weightPct_cloud">33.3%</span>
-            </div>
-            <div class="weight-slider-row">
-              <input type="range" id="weightSlider_cloud" class="weight-slider" min="0" max="100" value="33" aria-label="Overcast skies importance weight">
-              <input type="number" id="weightNum_cloud" class="weight-number-input" min="0" max="100" value="33" aria-label="Overcast skies numerical weight">
-            </div>
-            <p class="weight-desc">Prioritizes high VLT lenses and documented flat/dim/low-light target separation.</p>
-          </div>
-
-          <!-- Dormant Brown Backgrounds -->
-          <div class="weight-card">
-            <div class="weight-header">
-              <label for="weightSlider_brown" class="weight-title">
-                <span>🌾 Dormant Brown Terrain</span>
-              </label>
-              <span class="weight-pct-badge" id="weightPct_brown">33.4%</span>
-            </div>
-            <div class="weight-slider-row">
-              <input type="range" id="weightSlider_brown" class="weight-slider" min="0" max="100" value="34" aria-label="Dormant brown background importance weight">
-              <input type="number" id="weightNum_brown" class="weight-number-input" min="0" max="100" value="34" aria-label="Dormant brown background numerical weight">
-            </div>
-            <p class="weight-desc">Open-field and desert contrast against dead brush/trees (exploratory heuristic).</p>
+          <div class="personalize-header-actions">
+            <button type="button" class="btn btn-secondary btn-sm btn-toggle-collapsible" id="btnTogglePersonalize" aria-expanded="true" aria-controls="personalizeContent" title="Toggle weight adjustments">
+              <span id="textTogglePersonalize">Adjust Weights</span>
+              <span class="collapse-caret" id="caretTogglePersonalize">▾</span>
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnResetWeights" title="Reset weighting priorities to equal balance">
+              ↺ Reset
+            </button>
           </div>
         </div>
 
-        <!-- Presets Bar & Zero-Weight Guard -->
-        <div class="personalize-footer">
-          <div class="presets-group">
-            <span class="presets-label">Quick Presets:</span>
-            <button class="preset-chip active" data-preset="balanced">Balanced (Equal)</button>
-            <button class="preset-chip" data-preset="sun">Bright Sun Specialist</button>
-            <button class="preset-chip" data-preset="cloud">Overcast / Low Light</button>
-            <button class="preset-chip" data-preset="brown">Dormant Brown Terrain</button>
-          </div>
-          <div class="presets-note">
-            <span class="audit-meta">Formula: (Σ Wᵢ × Rᵢ) / Σ Wᵢ · Normalized automatically</span>
-          </div>
-        </div>
+        <div id="personalizeContent" class="personalize-collapsible-body">
+          <!-- 3 Weight Sliders -->
+          <div class="weights-grid">
+            <!-- Direct Sunshine -->
+            <div class="weight-card">
+              <div class="weight-header">
+                <label for="weightSlider_sun" class="weight-title">
+                  <span>☀ Direct Sunshine</span>
+                </label>
+                <span class="weight-pct-badge" id="weightPct_sun">33.3%</span>
+              </div>
+              <div class="weight-slider-row">
+                <input type="range" id="weightSlider_sun" class="weight-slider" min="0" max="100" value="33" aria-label="Direct sunshine importance weight">
+                <input type="number" id="weightNum_sun" class="weight-number-input" min="0" max="100" value="33" aria-label="Direct sunshine numerical weight">
+              </div>
+              <p class="weight-desc">Prioritizes dark lenses (low VLT) that block glare and harsh overhead sun.</p>
+            </div>
 
-        <div id="zeroWeightWarning" class="zero-weight-alert" role="alert">
-          ⚠️ <strong>All weights are currently set to zero.</strong> Composite scores will evaluate to 0.00 until at least one weight is increased.
+            <!-- Overcast Skies -->
+            <div class="weight-card">
+              <div class="weight-header">
+                <label for="weightSlider_cloud" class="weight-title">
+                  <span>☁ Overcast Skies</span>
+                </label>
+                <span class="weight-pct-badge" id="weightPct_cloud">33.3%</span>
+              </div>
+              <div class="weight-slider-row">
+                <input type="range" id="weightSlider_cloud" class="weight-slider" min="0" max="100" value="33" aria-label="Overcast skies importance weight">
+                <input type="number" id="weightNum_cloud" class="weight-number-input" min="0" max="100" value="33" aria-label="Overcast skies numerical weight">
+              </div>
+              <p class="weight-desc">Prioritizes high VLT lenses and documented flat/dim/low-light target separation.</p>
+            </div>
+
+            <!-- Dormant Brown Backgrounds -->
+            <div class="weight-card">
+              <div class="weight-header">
+                <label for="weightSlider_brown" class="weight-title">
+                  <span>🌾 Dormant Brown Terrain</span>
+                </label>
+                <span class="weight-pct-badge" id="weightPct_brown">33.4%</span>
+              </div>
+              <div class="weight-slider-row">
+                <input type="range" id="weightSlider_brown" class="weight-slider" min="0" max="100" value="34" aria-label="Dormant brown background importance weight">
+                <input type="number" id="weightNum_brown" class="weight-number-input" min="0" max="100" value="34" aria-label="Dormant brown background numerical weight">
+              </div>
+              <p class="weight-desc">Open-field and desert contrast against dead brush/trees (exploratory heuristic).</p>
+            </div>
+          </div>
+
+          <!-- Presets Bar & Zero-Weight Guard -->
+          <div class="personalize-footer">
+            <div class="presets-group">
+              <span class="presets-label">Quick Presets:</span>
+              <button class="preset-chip active" data-preset="balanced">Balanced (Equal)</button>
+              <button class="preset-chip" data-preset="sun">Bright Sun Specialist</button>
+              <button class="preset-chip" data-preset="cloud">Overcast / Low Light</button>
+              <button class="preset-chip" data-preset="brown">Dormant Brown Terrain</button>
+            </div>
+            <div class="presets-note">
+              <span class="audit-meta">Formula: (Σ Wᵢ × Rᵢ) / Σ Wᵢ · Normalized automatically</span>
+            </div>
+          </div>
+
+          <div id="zeroWeightWarning" class="zero-weight-alert" role="alert">
+            ⚠️ <strong>All weights are currently set to zero.</strong> Composite scores will evaluate to 0.00 until at least one weight is increased.
+          </div>
         </div>
       </section>
 
       <!-- Section 2: Search, Filter, and View Controls -->
-      <section class="panel" aria-label="Search and Filter Controls">
-        <div class="controls-grid">
+      <section class="panel filter-panel" aria-label="Search and Filter Controls">
+        <div class="search-primary-row">
           <!-- Text Search -->
-          <div class="control-field">
+          <div class="control-field control-field-search">
             <label for="searchQuery" class="control-label">Search catalog</label>
             <input type="search" id="searchQuery" class="input-text" placeholder="e.g. 42CILA, open field, purple, ED..." aria-label="Search lens code, background, lighting, or color profile">
           </div>
 
-          <!-- Technology Filter -->
-          <div class="control-field">
-            <label for="filterTech" class="control-label">Filtration Technology</label>
-            <select id="filterTech" class="select-control" aria-label="Filter by filtration technology">
-              <option value="">All technologies</option>
-              <option value="ED">Enhanced Definition (ED)</option>
-              <option value="HC">High Contrast (HC)</option>
-              <option value="MX">Max Orange (MX)</option>
-              <option value="N">Neutralizer (N)</option>
-              <option value="AR">Anti-reflective (AR)</option>
-              <option value="MX + N">Hybrid (MX + N)</option>
-            </select>
-          </div>
-
-          <!-- VLT Bracket Filter -->
-          <div class="control-field">
-            <label for="filterVlt" class="control-label">Light Transmission (VLT)</label>
-            <select id="filterVlt" class="select-control" aria-label="Filter by visible light transmission bracket">
-              <option value="">All VLT brackets</option>
-              <option value="dark">Dark (7% – 25%)</option>
-              <option value="mid">Medium (26% – 55%)</option>
-              <option value="light">Light (56% – 75%)</option>
-              <option value="very">High / Clear (76% – 98%)</option>
-            </select>
-          </div>
-
-          <!-- Sort Order -->
-          <div class="control-field">
-            <label for="selectSort" class="control-label">Sort Order</label>
-            <select id="selectSort" class="select-control" aria-label="Select catalog sort order">
-              <option value="composite">Personalized Heuristic (High → Low)</option>
-              <option value="vlt">Darkest First (Lowest VLT)</option>
-              <option value="vlt-desc">Lightest First (Highest VLT)</option>
-              <option value="id">Lens Code (A → Z)</option>
-              <option value="sun">Direct Sun Rating (High → Low)</option>
-              <option value="cloud">Overcast Rating (High → Low)</option>
-              <option value="brown">Dormant Brown Rating (High → Low)</option>
-            </select>
+          <!-- Filter Mode Quick Buttons -->
+          <div class="quick-modes-wrap">
+            <span class="control-label">Quick Screening Filter</span>
+            <div class="mode-buttons-group">
+              <button class="btn btn-secondary active" data-mode="all">All Lenses</button>
+              <button class="btn btn-secondary" data-mode="sun">☀ Sun ≥ 4</button>
+              <button class="btn btn-secondary" data-mode="cloud">☁ Overcast ≥ 4</button>
+              <button class="btn btn-secondary" data-mode="brown">🌾 Brown ≥ 4</button>
+            </div>
           </div>
         </div>
 
-        <!-- Filter Mode Quick Buttons & Export Actions -->
-        <div class="filter-actions-bar">
-          <div class="mode-buttons-group">
-            <button class="btn btn-secondary active" data-mode="all">All Lenses</button>
-            <button class="btn btn-secondary" data-mode="sun">☀ Sun ≥ 4</button>
-            <button class="btn btn-secondary" data-mode="cloud">☁ Overcast ≥ 4</button>
-            <button class="btn btn-secondary" data-mode="brown">🌾 Brown Background ≥ 4</button>
-          </div>
+        <!-- Mobile Toggle for Advanced Filters -->
+        <div class="advanced-filters-trigger-row">
+          <button type="button" class="btn btn-secondary btn-sm btn-toggle-advanced" id="btnToggleAdvancedFilters" aria-expanded="false" aria-controls="advancedFiltersDrawer">
+            <span>⚙️ More Filters &amp; Sorting</span>
+            <span class="active-filters-badge" id="activeFiltersBadge" style="display: none;">0</span>
+            <span class="filters-caret" id="caretAdvancedFilters">▾</span>
+          </button>
+        </div>
 
-          <div class="utility-buttons-group">
-            <div class="view-toggle-group" role="group" aria-label="Layout view mode">
-              <button class="view-toggle-btn active" id="btnViewTable" title="Tabular Matrix View">
-                <span>☷ Table</span>
-              </button>
-              <button class="view-toggle-btn" id="btnViewCards" title="Card Grid View">
-                <span>▦ Cards</span>
-              </button>
+        <!-- Collapsible Advanced Filters (Desktop Always Open / Mobile Collapsible) -->
+        <div id="advancedFiltersDrawer" class="advanced-filters-drawer">
+          <div class="controls-grid">
+            <!-- Technology Filter -->
+            <div class="control-field">
+              <label for="filterTech" class="control-label">Filtration Technology</label>
+              <select id="filterTech" class="select-control" aria-label="Filter by filtration technology">
+                <option value="">All technologies</option>
+                <option value="ED">Enhanced Definition (ED)</option>
+                <option value="HC">High Contrast (HC)</option>
+                <option value="MX">Max Orange (MX)</option>
+                <option value="N">Neutralizer (N)</option>
+                <option value="AR">Anti-reflective (AR)</option>
+                <option value="MX + N">Hybrid (MX + N)</option>
+              </select>
             </div>
 
-            <button class="btn btn-secondary btn-sm" id="btnResetFilters" title="Reset all search queries and filters">
-              Reset Filters
-            </button>
-            <button class="btn btn-primary btn-sm" id="btnExportFiltered" title="Download currently filtered lens specifications and calculated ratings as an RFC-4180 CSV">
-              <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
-              Export Filtered CSV
-            </button>
+            <!-- VLT Bracket Filter -->
+            <div class="control-field">
+              <label for="filterVlt" class="control-label">Light Transmission (VLT)</label>
+              <select id="filterVlt" class="select-control" aria-label="Filter by visible light transmission bracket">
+                <option value="">All VLT brackets</option>
+                <option value="dark">Dark (7% – 25%)</option>
+                <option value="mid">Medium (26% – 55%)</option>
+                <option value="light">Light (56% – 75%)</option>
+                <option value="very">High / Clear (76% – 98%)</option>
+              </select>
+            </div>
+
+            <!-- Sort Order -->
+            <div class="control-field">
+              <label for="selectSort" class="control-label">Sort Order</label>
+              <select id="selectSort" class="select-control" aria-label="Select catalog sort order">
+                <option value="composite">Personalized Heuristic (High → Low)</option>
+                <option value="vlt">Darkest First (Lowest VLT)</option>
+                <option value="vlt-desc">Lightest First (Highest VLT)</option>
+                <option value="id">Lens Code (A → Z)</option>
+                <option value="sun">Direct Sun Rating (High → Low)</option>
+                <option value="cloud">Overcast Rating (High → Low)</option>
+                <option value="brown">Dormant Brown Rating (High → Low)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Actions Bar -->
+          <div class="filter-actions-bar">
+            <div class="utility-buttons-group">
+              <div class="view-toggle-group" role="group" aria-label="Layout view mode">
+                <button class="view-toggle-btn active" id="btnViewTable" title="Tabular Matrix View">
+                  <span>☷ Table</span>
+                </button>
+                <button class="view-toggle-btn" id="btnViewCards" title="Card Grid View">
+                  <span>▦ Cards</span>
+                </button>
+              </div>
+
+              <button class="btn btn-secondary btn-sm" id="btnResetFilters" title="Reset all search queries and filters">
+                Reset Filters
+              </button>
+              <button class="btn btn-primary btn-sm" id="btnExportFiltered" title="Download currently filtered lens specifications and calculated ratings as an RFC-4180 CSV">
+                <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                Export Filtered CSV
+              </button>
+            </div>
           </div>
         </div>
       </section>

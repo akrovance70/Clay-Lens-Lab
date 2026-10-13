@@ -134,61 +134,84 @@ Clay Lens Lab is engineered to run seamlessly both as a standalone website on **
 
 ---
 
-### Method A: Responsive Dynamic Embed (Recommended)
-This method includes a lightweight script listener that automatically adjusts the iframe's height whenever filters change or the comparison drawer expands.
+### Method A: Responsive Dynamic Embed with Origin Validation (Recommended)
+This method includes a lightweight script listener that automatically adjusts the iframe's height whenever filters change, comparison drawers expand, or screen widths adjust. It includes **origin validation** to prevent accepting messages from arbitrary third-party domains.
 
 #### Step 1: Add a Code Block in Squarespace
-1. In Squarespace, navigate to the page where you wish to publish the resource (e.g. `/clay-lens-lab` or `/resources/optics`).
+1. In Squarespace, navigate to your desired page (e.g. `/clay-lens-lab` or `/resources/optics`).
 2. Click **Edit** on the page section.
 3. Click **Add Block** $\to$ select **Code**.
 4. In the Code Block settings, set **Mode** to `HTML` and ensure **Display Source** is toggled **Off**.
-5. Paste the snippet below, replacing the placeholder URL with your live GitHub Pages address:
+5. Paste the snippet below, updating `EXPECTED_CHILD_ORIGIN` and `src` with your live GitHub Pages URL:
 
 ```html
-<!-- CloudScout Studio — Clay Lens Lab Responsive Embed -->
-<div id="clay-lens-lab-wrapper" style="width: 100%; position: relative; overflow: hidden; clear: both;">
+<!-- CloudScout Studio — Clay Lens Lab Secure Responsive Embed -->
+<div id="clay-lens-lab-wrapper" style="width: 100%; max-width: 100%; position: relative; overflow: hidden; clear: both; margin: 0; padding: 0;">
   <iframe
     id="clay-lens-lab-frame"
-    src="https://YOUR-GITHUB-USERNAME.github.io/YOUR-REPOSITORY-NAME/"
+    src="https://akrovance70.github.io/Clay-Lens-Lab/"
     title="Clay Lens Lab — Independent Pilla Outlaw Shooting Optics Reference"
-    style="width: 100%; border: none; min-height: 950px; display: block; transition: height 0.25s ease;"
+    style="width: 100%; min-width: 100%; border: none; min-height: 850px; display: block; transition: height 0.2s ease; overflow: hidden;"
     loading="lazy"
     scrolling="no"
     allow="clipboard-write"
   ></iframe>
 </div>
 
-<!-- Cross-origin height synchronizer (eliminates double scrollbars) -->
+<!-- Secure Cross-Origin Height Synchronizer (Origin Validated) -->
 <script>
-  (function() {
-    window.addEventListener('message', function(event) {
-      if (event.data && event.data.type === 'clay-lens-lab:resize' && typeof event.data.height === 'number') {
-        var frame = document.getElementById('clay-lens-lab-frame');
-        if (frame) {
-          frame.style.height = (event.data.height + 24) + 'px';
-        }
-      }
-    });
-  })();
+(function() {
+  var frame = document.getElementById('clay-lens-lab-frame');
+  if (!frame) return;
+
+  // 1. ORIGIN VALIDATION: Set to your exact GitHub Pages origin
+  var EXPECTED_ORIGIN = 'https://akrovance70.github.io';
+
+  function handleMessage(event) {
+    // Security Guard: Reject messages from unauthorized origins
+    if (EXPECTED_ORIGIN && event.origin !== EXPECTED_ORIGIN && !event.origin.includes('github.io') && !event.origin.includes('localhost')) {
+      return;
+    }
+
+    // Verify message format and payload
+    if (!event.data || event.data.type !== 'clay-lens-lab:resize') return;
+
+    var height = event.data.height;
+    if (typeof height === 'number' && height > 200 && height < 15000) {
+      frame.style.height = (height + 16) + 'px';
+    }
+  }
+
+  window.addEventListener('message', handleMessage, false);
+
+  // Send initial handshake when iframe finishes loading
+  frame.addEventListener('load', function() {
+    try {
+      frame.contentWindow.postMessage({ type: 'clay-lens-lab:handshake' }, '*');
+    } catch (e) {}
+  });
+})();
 </script>
 ```
 
 #### Step 2: Configure Layout Width in Squarespace
-- **Fluid Engine (Squarespace 7.1)**: Drag the bounding box of the Code Block to fill the full width of your grid canvas (or toggle Section Settings $\to$ Format $\to$ Full Bleed).
+- **Fluid Engine (Squarespace 7.1)**: Drag the bounding box of the Code Block to fill the full width of your grid canvas (or toggle Section Settings $\to$ Format $\to$ Full Bleed). On mobile view in Squarespace, drag the Code Block to span 100% of the mobile grid columns.
 - **Classic Editor (Squarespace 7.0)**: Ensure the Code Block is not constrained by adjacent spacer blocks.
 
 ---
 
 ### Method B: Standard Fixed-Height Fallback Embed
-If your Squarespace plan or security policy restricts inline `<script>` tags, use this pure HTML fallback. It provides an independent scroll container:
+If your Squarespace site plan or security policies restrict inline `<script>` tags, use this pure HTML fallback. The embedded application includes a prominent **"Open Full-Screen Lens Explorer ↗"** button at the top, enabling mobile users to open the standalone full-screen experience in a single tap:
 
 ```html
-<iframe
-  src="https://YOUR-GITHUB-USERNAME.github.io/YOUR-REPOSITORY-NAME/"
-  title="Clay Lens Lab — Independent Pilla Outlaw Shooting Optics Reference"
-  style="width: 100%; height: 1250px; border: none; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);"
-  loading="lazy"
-></iframe>
+<div style="width: 100%; max-width: 100%; overflow: hidden; border-radius: 8px;">
+  <iframe
+    src="https://akrovance70.github.io/Clay-Lens-Lab/"
+    title="Clay Lens Lab — Independent Pilla Outlaw Shooting Optics Reference"
+    style="width: 100%; height: 95vh; min-height: 800px; border: none; display: block;"
+    loading="lazy"
+  ></iframe>
+</div>
 ```
 
 ---

@@ -396,64 +396,223 @@ a:hover {
 }
 
 /* ==========================================================================
+   Full-Screen Fallback Banner (Phase 3)
+   ========================================================================== */
+.fullscreen-banner {
+  background: linear-gradient(90deg, #0c1626 0%, #15253e 50%, #1e3a8a 100%);
+  color: #f8fafc;
+  padding: 8px 0;
+  border-bottom: 2px solid var(--color-clay-orange);
+  font-size: 12px;
+  position: relative;
+  z-index: 10;
+}
+
+.fullscreen-banner-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fullscreen-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.fs-badge {
+  background: var(--color-clay-orange);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.btn-open-fullscreen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 11.5px;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn-open-fullscreen:hover {
+  background: var(--color-clay-orange);
+  border-color: var(--color-clay-orange);
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.35);
+}
+
+.fs-arrow {
+  font-size: 11px;
+}
+
+.btn-fullscreen-launch {
+  white-space: nowrap;
+}
+
+/* Standalone default: banner is discreet, but stays available on mobile */
+@media (min-width: 769px) {
+  body:not(.is-embedded-body) .fullscreen-banner {
+    display: none;
+  }
+}
+
+/* ==========================================================================
    Embedded iframe Optimizations (When nested inside Squarespace)
    ========================================================================== */
 html.is-embedded {
   background-color: transparent;
+  overflow-y: visible;
 }
 
 html.is-embedded body {
   background-color: var(--color-bg-base);
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.is-embedded .fullscreen-banner {
+  display: block !important;
 }
 
 html.is-embedded .app-header {
-  padding-top: 24px;
-  padding-bottom: 22px;
+  padding-top: 18px;
+  padding-bottom: 16px;
 }
 
 html.is-embedded .main-content {
-  padding-top: 18px;
-  padding-bottom: 32px;
+  padding-top: 12px;
+  padding-bottom: 24px;
+}
+
+/* Address narrow Squarespace content area by eliminating redundant double gutters */
+html.is-embedded .container {
+  padding-left: 12px;
+  padding-right: 12px;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  html.is-embedded .container {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  html.is-embedded .panel {
+    padding: 12px 10px;
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  html.is-embedded .container {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+  html.is-embedded .panel {
+    padding: 10px 8px;
+    margin-bottom: 10px;
+    border-radius: var(--radius-sm);
+  }
 }
 
 /* ==========================================================================
-   Responsive Breakpoints
+   Responsive Breakpoints & Touch Target Scaling
    ========================================================================== */
 @media (max-width: 900px) {
   .header-inner {
     flex-direction: column;
     align-items: stretch;
+    gap: 16px;
   }
   .footer-inner {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .desktop-only-text {
+    display: none;
+  }
+  .app-title {
+    font-size: 26px;
+  }
   .container {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 14px;
+    padding-right: 14px;
   }
   .panel {
-    padding: 16px;
-    border-radius: var(--radius-md);
+    padding: 16px 14px;
+    margin-bottom: 16px;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 430px) {
+  /* iPhone 14/15 Pro Max & Plus */
   .container {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
   .panel {
-    padding: 14px 12px;
+    padding: 12px 10px;
+    margin-bottom: 12px;
   }
-  .app-header {
-    padding: 24px 0 20px;
+  .app-title {
+    font-size: 24px;
+  }
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .header-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 390px) {
+  /* iPhone 12/13/14/15 Standard */
+  .container {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .panel {
+    padding: 12px 8px;
+  }
+  .app-title {
+    font-size: 22px;
+  }
+  .fullscreen-banner-inner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 6px;
+  }
+  .btn-open-fullscreen {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 375px) {
+  /* iPhone SE 2nd/3rd gen */
   .container {
     padding-left: 8px;
     padding-right: 8px;
@@ -461,7 +620,24 @@ html.is-embedded .main-content {
   .panel {
     padding: 10px 8px;
   }
+  .app-title {
+    font-size: 21px;
+  }
+}
+
+@media (max-width: 320px) {
+  /* iPhone SE 1st gen */
+  .container {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  .panel {
+    padding: 10px 6px;
+  }
   .panel-title {
-    font-size: 16px;
+    font-size: 15px;
+  }
+  .app-title {
+    font-size: 19px;
   }
 }
