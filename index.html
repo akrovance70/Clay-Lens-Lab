@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clay Lens Lab — Independent Pilla Outlaw Shooting Optics Reference</title>
+  <meta name="description" content="Independent reference and comparison tool for 43 Pilla Outlaw shooting-glasses lenses. Compare VLT, filtration chemistry, lighting conditions, and personalized screening scores.">
+  
+  <!-- Modern Typography: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Application Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+  <!-- Top Navigation & Branding Header -->
+  <header class="app-header">
+    <div class="container header-inner">
+      <div class="header-branding">
+        <div class="brand-eyebrow">
+          <span class="brand-sponsor">CloudScout Studio Field Guide</span>
+          <span class="brand-sep">·</span>
+          <span>Clay Target Optics Reference</span>
+          <span class="eyebrow-pill">2026 Edition</span>
+        </div>
+        <h1 class="app-title">Clay Lens <span class="title-accent">Lab</span></h1>
+        <p class="app-description">
+          An independent research resource from CloudScout Studio indexing 43 published Outlaw-series shooting lenses. Compare manufacturer/dealer light transmission specifications, documented lighting conditions, and user-weighted suitability screening ratings.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <div class="header-disclaimer-badge" title="Independent educational resource published by CloudScout Studio; not affiliated with Pilla Sport or ZEISS">
+          <span>🛡️ CloudScout Studio Independent Reference</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btnOpenMethodology" title="View calculation methodology, scoring logic, and data sources">
+          <span>📖 Methodology & Sources</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application Body -->
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Section 1: Personalize Your Rankings (User-Adjustable Weights) -->
+      <section class="panel personalize-panel" aria-labelledby="personalizeHeading">
+        <div class="panel-header">
+          <div>
+            <h2 id="personalizeHeading" class="panel-title">
+              <span class="icon-badge">🎯</span>
+              Personalize Your Rankings
+            </h2>
+            <p class="panel-subtitle">
+              Adjust condition priorities to calculate a <strong>Personalized Heuristic Score</strong> (0.00 – 5.00) tailored to your typical range environments.
+            </p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btnResetWeights" title="Reset weighting priorities to equal balance">
+            ↺ Reset Weights
+          </button>
+        </div>
+
+        <!-- 3 Weight Sliders -->
+        <div class="weights-grid">
+          <!-- Direct Sunshine -->
+          <div class="weight-card">
+            <div class="weight-header">
+              <label for="weightSlider_sun" class="weight-title">
+                <span>☀ Direct Sunshine</span>
+              </label>
+              <span class="weight-pct-badge" id="weightPct_sun">33.3%</span>
+            </div>
+            <div class="weight-slider-row">
+              <input type="range" id="weightSlider_sun" class="weight-slider" min="0" max="100" value="33" aria-label="Direct sunshine importance weight">
+              <input type="number" id="weightNum_sun" class="weight-number-input" min="0" max="100" value="33" aria-label="Direct sunshine numerical weight">
+            </div>
+            <p class="weight-desc">Prioritizes dark lenses (low VLT) that block glare and harsh overhead sun.</p>
+          </div>
+
+          <!-- Overcast Skies -->
+          <div class="weight-card">
+            <div class="weight-header">
+              <label for="weightSlider_cloud" class="weight-title">
+                <span>☁ Overcast Skies</span>
+              </label>
+              <span class="weight-pct-badge" id="weightPct_cloud">33.3%</span>
+            </div>
+            <div class="weight-slider-row">
+              <input type="range" id="weightSlider_cloud" class="weight-slider" min="0" max="100" value="33" aria-label="Overcast skies importance weight">
+              <input type="number" id="weightNum_cloud" class="weight-number-input" min="0" max="100" value="33" aria-label="Overcast skies numerical weight">
+            </div>
+            <p class="weight-desc">Prioritizes high VLT lenses and documented flat/dim/low-light target separation.</p>
+          </div>
+
+          <!-- Dormant Brown Backgrounds -->
+          <div class="weight-card">
+            <div class="weight-header">
+              <label for="weightSlider_brown" class="weight-title">
+                <span>🌾 Dormant Brown Terrain</span>
+              </label>
+              <span class="weight-pct-badge" id="weightPct_brown">33.4%</span>
+            </div>
+            <div class="weight-slider-row">
+              <input type="range" id="weightSlider_brown" class="weight-slider" min="0" max="100" value="34" aria-label="Dormant brown background importance weight">
+              <input type="number" id="weightNum_brown" class="weight-number-input" min="0" max="100" value="34" aria-label="Dormant brown background numerical weight">
+            </div>
+            <p class="weight-desc">Open-field and desert contrast against dead brush/trees (exploratory heuristic).</p>
+          </div>
+        </div>
+
+        <!-- Presets Bar & Zero-Weight Guard -->
+        <div class="personalize-footer">
+          <div class="presets-group">
+            <span class="presets-label">Quick Presets:</span>
+            <button class="preset-chip active" data-preset="balanced">Balanced (Equal)</button>
+            <button class="preset-chip" data-preset="sun">Bright Sun Specialist</button>
+            <button class="preset-chip" data-preset="cloud">Overcast / Low Light</button>
+            <button class="preset-chip" data-preset="brown">Dormant Brown Terrain</button>
+          </div>
+          <div class="presets-note">
+            <span class="audit-meta">Formula: (Σ Wᵢ × Rᵢ) / Σ Wᵢ · Normalized automatically</span>
+          </div>
+        </div>
+
+        <div id="zeroWeightWarning" class="zero-weight-alert" role="alert">
+          ⚠️ <strong>All weights are currently set to zero.</strong> Composite scores will evaluate to 0.00 until at least one weight is increased.
+        </div>
+      </section>
+
+      <!-- Section 2: Search, Filter, and View Controls -->
+      <section class="panel" aria-label="Search and Filter Controls">
+        <div class="controls-grid">
+          <!-- Text Search -->
+          <div class="control-field">
+            <label for="searchQuery" class="control-label">Search catalog</label>
+            <input type="search" id="searchQuery" class="input-text" placeholder="e.g. 42CILA, open field, purple, ED..." aria-label="Search lens code, background, lighting, or color profile">
+          </div>
+
+          <!-- Technology Filter -->
+          <div class="control-field">
+            <label for="filterTech" class="control-label">Filtration Technology</label>
+            <select id="filterTech" class="select-control" aria-label="Filter by filtration technology">
+              <option value="">All technologies</option>
+              <option value="ED">Enhanced Definition (ED)</option>
+              <option value="HC">High Contrast (HC)</option>
+              <option value="MX">Max Orange (MX)</option>
+              <option value="N">Neutralizer (N)</option>
+              <option value="AR">Anti-reflective (AR)</option>
+              <option value="MX + N">Hybrid (MX + N)</option>
+            </select>
+          </div>
+
+          <!-- VLT Bracket Filter -->
+          <div class="control-field">
+            <label for="filterVlt" class="control-label">Light Transmission (VLT)</label>
+            <select id="filterVlt" class="select-control" aria-label="Filter by visible light transmission bracket">
+              <option value="">All VLT brackets</option>
+              <option value="dark">Dark (7% – 25%)</option>
+              <option value="mid">Medium (26% – 55%)</option>
+              <option value="light">Light (56% – 75%)</option>
+              <option value="very">High / Clear (76% – 98%)</option>
+            </select>
+          </div>
+
+          <!-- Sort Order -->
+          <div class="control-field">
+            <label for="selectSort" class="control-label">Sort Order</label>
+            <select id="selectSort" class="select-control" aria-label="Select catalog sort order">
+              <option value="composite">Personalized Heuristic (High → Low)</option>
+              <option value="vlt">Darkest First (Lowest VLT)</option>
+              <option value="vlt-desc">Lightest First (Highest VLT)</option>
+              <option value="id">Lens Code (A → Z)</option>
+              <option value="sun">Direct Sun Rating (High → Low)</option>
+              <option value="cloud">Overcast Rating (High → Low)</option>
+              <option value="brown">Dormant Brown Rating (High → Low)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Mode Quick Buttons & Export Actions -->
+        <div class="filter-actions-bar">
+          <div class="mode-buttons-group">
+            <button class="btn btn-secondary active" data-mode="all">All Lenses</button>
+            <button class="btn btn-secondary" data-mode="sun">☀ Sun ≥ 4</button>
+            <button class="btn btn-secondary" data-mode="cloud">☁ Overcast ≥ 4</button>
+            <button class="btn btn-secondary" data-mode="brown">🌾 Brown Background ≥ 4</button>
+          </div>
+
+          <div class="utility-buttons-group">
+            <div class="view-toggle-group" role="group" aria-label="Layout view mode">
+              <button class="view-toggle-btn active" id="btnViewTable" title="Tabular Matrix View">
+                <span>☷ Table</span>
+              </button>
+              <button class="view-toggle-btn" id="btnViewCards" title="Card Grid View">
+                <span>▦ Cards</span>
+              </button>
+            </div>
+
+            <button class="btn btn-secondary btn-sm" id="btnResetFilters" title="Reset all search queries and filters">
+              Reset Filters
+            </button>
+            <button class="btn btn-primary btn-sm" id="btnExportFiltered" title="Download currently filtered lens specifications and calculated ratings as an RFC-4180 CSV">
+              <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+              Export Filtered CSV
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Catalog Data Table / Cards -->
+      <section class="panel" aria-label="Lens Catalog">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title" style="margin: 0;">
+              <span>Lens Catalog & Screening Scores</span>
+            </h2>
+            <span class="panel-subtitle" id="resultCount">Loading lenses...</span>
+          </div>
+          <span class="muted" style="font-size: 12px;">
+            Select up to 4 lenses to compare side by side · Click table headers to sort
+          </span>
+        </div>
+
+        <div id="errorMessage" style="display: none;"></div>
+
+        <!-- Table View -->
+        <div id="tableContainer" class="table-scroll-container">
+          <table class="lens-table">
+            <thead>
+              <!-- Top Category Header Group -->
+              <tr>
+                <th colspan="8" class="th-group-published">
+                  📋 Manufacturer & Dealer Published Specifications
+                </th>
+                <th colspan="4" class="th-group-heuristic">
+                  🧮 Estimated Screening Ratings (Calculated Heuristics — Not Certified)
+                </th>
+              </tr>
+              <!-- Column Sortable Headers -->
+              <tr>
+                <th class="th-not-sortable col-center" style="width: 50px;">Compare</th>
+                <th data-sort-col="id">Lens ID <span class="sort-arrow">↕</span></th>
+                <th data-sort-col="vlt">VLT <span class="sort-arrow">↕</span></th>
+                <th class="th-not-sortable">Technology</th>
+                <th class="th-not-sortable">Color Profile</th>
+                <th class="th-not-sortable">Documented Environments</th>
+                <th class="th-not-sortable">Documented Lighting</th>
+                <th class="th-not-sortable">Source</th>
+                <th data-sort-col="composite" class="col-composite-score">
+                  Personalized <span class="sort-arrow">▼</span>
+                </th>
+                <th data-sort-col="sun" class="col-score">☀ Sun <span class="sort-arrow">↕</span></th>
+                <th data-sort-col="cloud" class="col-score">☁ Overcast <span class="sort-arrow">↕</span></th>
+                <th data-sort-col="brown" class="col-score">🌾 Brown <span class="sort-arrow">↕</span></th>
+              </tr>
+            </thead>
+            <tbody id="tableRows">
+              <!-- Rendered via app.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Cards View (for Mobile or Alternate View) -->
+        <div id="cardsContainer" class="cards-grid" style="display: none;">
+          <!-- Rendered via app.js -->
+        </div>
+
+        <p class="swatch-disclaimer-note">
+          <span>🎨</span>
+          <em>Note: Color swatch circles are illustrative approximations of published tint descriptors, not spectrophotometric optical transmission simulations.</em>
+        </p>
+      </section>
+
+      <!-- Section 4: Side-by-Side Comparison Comparator -->
+      <section class="panel comparison-panel" id="comparisonSection" aria-label="Lens Comparison Matrix">
+        <div id="comparisonContainer">
+          <!-- Rendered via comparison.js -->
+        </div>
+      </section>
+
+      <!-- Section 5: Educational Context & Scoring Transparency -->
+      <section class="panel" aria-labelledby="transparencyHeading">
+        <h2 id="transparencyHeading" class="panel-title" style="margin-bottom: 12px;">
+          <span class="icon-badge">⚖️</span>
+          Scoring Methodology & Optical Transparency
+        </h2>
+
+        <div class="footer-disclaimer-box" style="margin-top: 0; margin-bottom: 16px;">
+          <strong>Heuristic Clarification:</strong> Ratings displayed in this application are mathematical screening heuristics derived from published VLT percentages and dealer environmental descriptions. They are <strong>not</strong> certified performance ratings from Pilla Sport or Carl Zeiss Vision. A rating of 5/5 indicates that a lens meets standard optical heuristics for that specific condition, not that it is universally superior. Eye color alone does not determine lens suitability.
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; font-size: 13px; line-height: 1.55;">
+          <div>
+            <strong>☀ Direct Sunshine (1–5):</strong>
+            <p style="margin: 4px 0; color: var(--color-text-muted);">
+              Based strictly on Visible Light Transmission (VLT). Darker lenses block more total solar radiation: VLT ≤ 25% scores 5; ≤ 40% scores 4; ≤ 55% scores 3; ≤ 70% scores 2; &gt; 70% scores 1.
+            </p>
+          </div>
+          <div>
+            <strong>☁ Overcast Skies (1–5):</strong>
+            <p style="margin: 4px 0; color: var(--color-text-muted);">
+              Higher transmission lenses and formulations documented for flat, diminishing, or low light score higher (up to 5/5 for VLT ≥ 50% with low-light documentation).
+            </p>
+          </div>
+          <div>
+            <strong>🌾 Dormant Brown Backgrounds (1–5):</strong>
+            <p style="margin: 4px 0; color: var(--color-text-muted);">
+              Lenses documented for open field or desert environments featuring warm contrast profiles (orange, amber, red, brown) receive higher screening scores. <em>This heuristic is the least validated and has not been tested via controlled optical target-contrast benches.</em>
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Methodology & Sources Modal -->
+  <div id="methodologyModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle" class="modal-title">Methodology, Sources & Data Integrity</h3>
+        <button class="modal-close-btn" id="btnCloseMethodology" aria-label="Close methodology modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <h4>1. Authoritative Data Provenance</h4>
+        <p>
+          Clay Lens Lab indexes 43 Pilla Outlaw shooting-glasses lenses derived from authorized dealer technical filtration guides and official Pilla Sport publications. Every record includes audit fields:
+        </p>
+        <ul>
+          <li><strong>Source Type:</strong> Distinguishes authorized dealer filtration guides from official catalog literature.</li>
+          <li><strong>Disputed Classification Notice:</strong> Lens <code>80CMOS</code> is preserved as <code>HC*</code> because distributor documentation contains conflicting classifications (CMOS traditionally indicates Chromashift Max Orange, while dealer indices classified it under High Contrast).</li>
+        </ul>
+
+        <h4>2. Heuristic Scoring Formulas</h4>
+        <p>Individual ratings (1 to 5) are generated by deterministic rules:</p>
+        <div class="modal-code-block">
+// Direct Sunshine (VLT heuristic)
+vlt &lt;= 25 ? 5 : vlt &lt;= 40 ? 4 : vlt &lt;= 55 ? 3 : vlt &lt;= 70 ? 2 : 1;
+
+// Overcast Skies (VLT & Lighting descriptor heuristic)
+if (light.includes('flat') || light.includes('low')) return vlt &gt;= 50 ? 5 : 3;
+vlt &lt;= 20 ? 1 : vlt &lt;= 35 ? 2 : vlt &lt;= 50 ? 3 : vlt &lt;= 70 ? 4 : 5;
+
+// Dormant Brown Backgrounds (Environment & Color heuristic)
+if (env.includes('open field') || env.includes('desert')) {
+  return /orange|amber|red|brown/.test(color) ? 5 : 4;
+}
+return 2;
+        </div>
+
+        <h4>3. Personalized Composite Scoring Formula</h4>
+        <p>The personalized score combines the three base ratings using your normalized custom weights:</p>
+        <div class="modal-code-block">
+Composite Score = (W_sun × Sun + W_cloud × Cloud + W_brown × Brown) / (W_sun + W_cloud + W_brown)
+        </div>
+        <p>If all weights are zero, the composite score evaluates cleanly to 0.00 without division-by-zero errors.</p>
+
+        <div class="modal-callout">
+          <strong>Optical Reality Check:</strong> No algorithm can replace trying a lens at your local shooting ground. Lighting conditions, clay target color (fluorescent orange, lime green, black, white), ocular physiology, and personal contrast sensitivity all influence on-target visibility.
+        </div>
+
+        <h4>4. Direct Source References</h4>
+        <ul>
+          <li><a href="https://starkeyoutdoor.co.uk/pages/which-pilla-lens-is-right-for-you" target="_blank" rel="noopener noreferrer">Starkey Outdoor Pilla Filtration Guide (Authorized Dealer)</a></li>
+          <li><a href="https://pillasport.com/pages/solid-filtrations" target="_blank" rel="noopener noreferrer">Pilla Sport Official Solid Filtrations Technology Guide</a></li>
+          <li><a href="https://pillasport.com/products/x7-custom-rx-kit" target="_blank" rel="noopener noreferrer">Pilla Sport Outlaw X7 Rx Architecture Documentation</a></li>
+        </ul>
+      </div>
+    </div>
+    <div id="modalBackdrop" style="position: absolute; inset: 0;"></div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container footer-inner">
+      <div>
+        <div class="footer-brand-line">
+          <strong style="color: var(--color-text-main); font-size: 14px;">Clay Lens Lab</strong>
+          <span class="footer-sponsor-tag">A CloudScout Studio Reference Project</span>
+        </div>
+        <p style="margin: 6px 0 12px;">
+          An independent, open-source reference tool designed for clay-target sports enthusiasts (Sporting Clays, FITASC, Skeet, and Trap), developed by CloudScout Studio.
+        </p>
+        <div class="footer-disclaimer-box">
+          <strong>Independent Disclaimer:</strong> Clay Lens Lab is an independent educational and research resource published by CloudScout Studio. It is not affiliated with, sponsored by, or endorsed by Pilla Sport or Carl Zeiss Vision. No eyewear impact safety certification, ballistic certification, or prescription optical claims are made.
+        </div>
+      </div>
+      <div>
+        <strong>Verified Primary Sources</strong>
+        <ul style="padding-left: 18px; margin: 8px 0; line-height: 1.8;">
+          <li><a href="https://starkeyoutdoor.co.uk/pages/which-pilla-lens-is-right-for-you" target="_blank" rel="noopener noreferrer">Starkey Outdoor Dealer Chart</a></li>
+          <li><a href="https://pillasport.com/pages/solid-filtrations" target="_blank" rel="noopener noreferrer">Pilla Official Solid Filtrations</a></li>
+          <li><a href="https://pillasport.com/products/x7-custom-rx-kit" target="_blank" rel="noopener noreferrer">Pilla Outlaw Series Specifications</a></li>
+          <li><a href="tests/test_suite.html">Automated Test Suite</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Scripts (UMD Universal Compatibility) -->
+  <script src="js/heuristics.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/comparison.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

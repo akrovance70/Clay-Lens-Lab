@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clay Lens Lab — Automated Test Suite</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 30px 20px;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .summary-box {
+      display: flex;
+      gap: 20px;
+      padding: 16px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      font-weight: 600;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .badge-pass { color: #059669; }
+    .badge-fail { color: #dc2626; }
+    .test-group {
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .group-header {
+      background: #f8fafc;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 14px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .test-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+    .test-item:last-child {
+      border-bottom: none;
+    }
+    .status-tag {
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .status-pass {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .status-fail {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .status-info {
+      background: #eff6ff;
+      color: #1e40af;
+    }
+    .error-details {
+      margin-top: 4px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #b91c1c;
+    }
+    .btn-run {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-run:hover {
+      background: #1d4ed8;
+    }
+    .notice-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+  <script src="../js/heuristics.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/export.js"></script>
+  <script src="../js/comparison.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      <span>Clay Lens Lab — Automated Test Suite</span>
+      <button class="btn-run" id="btnRerun">Rerun All Tests</button>
+    </h1>
+
+    <div id="noticeContainer"></div>
+
+    <div class="summary-box" id="summaryBox">
+      <span>Executing test suite...</span>
+    </div>
+
+    <div id="testOutput"></div>
+  </div>
+
+  <script>
+    const H = window.ClayLensHeuristics;
+    const Export = window.ClayLensExport;
+    const Comp = window.ClayLensComparison;
+
+    let totalTests = 0;
+    let passedTests = 0;
+    let failedTests = 0;
+    const testGroups = [];
+
+    function group(name, fn) {
+      const tests = [];
+      const currentGroup = { name, tests };
+      testGroups.push(currentGroup);
+
+      const assert = (condition, description) => {
+        totalTests++;
+        if (condition) {
+          passedTests++;
+          tests.push({ desc: description, passed: true });
+        } else {
+          failedTests++;
+          tests.push({ desc: description, passed: false, error: 'Assertion failed' });
+        }
+      };
+
+      const assertEqual = (actual, expected, description) => {
+        totalTests++;
+        const match = JSON.stringify(actual) === JSON.stringify(expected);
+        if (match) {
+          passedTests++;
+          tests.push({ desc: description, passed: true });
+        } else {
+          failedTests++;
+          tests.push({
+            desc: description,
+            passed: false,
+            error: `Expected ${JSON.stringify(expected)}, received ${JSON.stringify(actual)}`
+          });
+        }
+      };
+
+      try {
+        fn({ assert, assertEqual });
+      } catch (err) {
+        failedTests++;
+        tests.push({ desc: 'Exception inside test block', passed: false, error: err.stack || err.message });
+      }
+    }
+
+    async function runSuite() {
+      totalTests = 0;
+      passedTests = 0;
+      failedTests = 0;
+      testGroups.length = 0;
+
+      // 1. Fetch JSON Dataset
+      let catalog = window.__testCatalog || [];
+      if (!catalog.length) {
+        try {
+          const res = await fetch('../data/pilla_lenses.json');
+          if (res.ok) {
+            catalog = await res.json();
+            window.__testCatalog = catalog;
+          }
+        } catch (err) {
+          console.warn('Fetch on file:// blocked, fallback active:', err);
+        }
+      }
+
+      const noticeContainer = document.getElementById('noticeContainer');
+      if (!catalog.length) {
+        noticeContainer.innerHTML = `
+          <div class="notice-box">
+            <strong>Local File Environment (file://):</strong> Automated background <code>fetch()</code> is restricted by browser security policies when running without a web server.
+            <div style="margin-top: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span>To test Dataset Integrity & Audit groups (1 & 2), select <code>data/pilla_lenses.json</code>:</span>
+              <input type="file" id="testJsonPicker" accept=".json" style="font-size: 12px;">
+            </div>
+            <div style="margin-top: 4px; font-size: 11px; color: #4b5563;">
+              On <strong>GitHub Pages</strong> or <code>python -m http.server</code>, the dataset loads automatically. Groups 3 through 7 are executing below.
+            </div>
+          </div>
+        `;
+        document.getElementById('testJsonPicker')?.addEventListener('change', (e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+              window.__testCatalog = JSON.parse(evt.target.result);
+              noticeContainer.innerHTML = '';
+              runSuite();
+            };
+            reader.readAsText(file);
+          }
+        });
+      } else {
+        noticeContainer.innerHTML = '';
+      }
+
+      // Group 1 & 2: Dataset Integrity & Source Attribution (when catalog is loaded)
+      if (catalog.length) {
+        group('1. Dataset Integrity & Identifiers', ({ assert, assertEqual }) => {
+          assertEqual(catalog.length, 43, 'Catalog must contain exactly 43 lens records');
+          
+          const ids = new Set();
+          for (const lens of catalog) {
+            assert(!ids.has(lens.id), `Lens ID must be unique: duplicate "${lens.id}" found`);
+            ids.add(lens.id);
+            assert(typeof lens.vlt === 'number' && lens.vlt >= 0 && lens.vlt <= 100, `VLT for ${lens.id} must be number 0-100`);
+            assert(lens.tech && typeof lens.tech === 'string', `Tech for ${lens.id} must be non-empty string`);
+            assert(lens.env && typeof lens.env === 'string', `Env for ${lens.id} must be non-empty string`);
+            assert(lens.light && typeof lens.light === 'string', `Light for ${lens.id} must be non-empty string`);
+            assert(lens.color && typeof lens.color === 'string', `Color for ${lens.id} must be non-empty string`);
+          }
+        });
+
+        group('2. Source Attribution & Verification Audit', ({ assert, assertEqual }) => {
+          for (const lens of catalog) {
+            assert(typeof lens.sourceUrl === 'string' && lens.sourceUrl.startsWith('http'), `${lens.id} must have valid sourceUrl`);
+            assert(
+              ['dealer_filtration_guide', 'official_catalog', 'distributor_cross_reference'].includes(lens.sourceType),
+              `${lens.id} has recognized sourceType (${lens.sourceType})`
+            );
+            assert(
+              ['verified_dealer', 'verified_official', 'disputed_classification'].includes(lens.verificationStatus),
+              `${lens.id} has valid verificationStatus`
+            );
+            if (lens.verificationStatus !== 'disputed_classification') {
+              assert(lens.verifiedDate === '2026-10-13', `${lens.id} verifiedDate is recorded`);
+            }
+          }
+
+          const lens80 = catalog.find(l => l.id === '80CMOS');
+          assert(lens80 !== undefined, '80CMOS exists in dataset');
+          assertEqual(lens80.tech, 'HC*', '80CMOS technology remains "HC*" preserving original annotation');
+          assertEqual(lens80.verificationStatus, 'disputed_classification', '80CMOS explicitly flagged as disputed_classification');
+        });
+      }
+
+      // Group 3: Historical Heuristic Calculation Outputs
+      group('3. Base Heuristic Rating Formulas', ({ assertEqual }) => {
+        // Direct Sunshine
+        assertEqual(H.calculateSunRating(7.0), 5, 'Sun score for 7CIED (7% VLT) must be 5');
+        assertEqual(H.calculateSunRating(25.0), 5, 'Sun score for 25% VLT must be 5');
+        assertEqual(H.calculateSunRating(26.0), 4, 'Sun score for 26% VLT must be 4');
+        assertEqual(H.calculateSunRating(40.0), 4, 'Sun score for 40% VLT must be 4');
+        assertEqual(H.calculateSunRating(50.0), 3, 'Sun score for 50% VLT must be 3');
+        assertEqual(H.calculateSunRating(65.0), 2, 'Sun score for 65% VLT must be 2');
+        assertEqual(H.calculateSunRating(98.0), 1, 'Sun score for 98% VLT must be 1');
+
+        // Overcast Skies
+        assertEqual(H.calculateCloudRating(53.0, 'Flat gray'), 5, 'Cloud score for 53CIK (Flat gray, 53% VLT) must be 5');
+        assertEqual(H.calculateCloudRating(12.0, 'Direct sun'), 1, 'Cloud score for 12CIBB (Direct sun, 12% VLT) must be 1');
+        assertEqual(H.calculateCloudRating(30.0, 'Medium'), 2, 'Cloud score for 30CMOS (Medium, 30% VLT) must be 2');
+        assertEqual(H.calculateCloudRating(46.0, 'Medium'), 3, 'Cloud score for 46CIPA (Medium, 46% VLT) must be 3');
+        assertEqual(H.calculateCloudRating(62.0, 'Medium, diminishing'), 4, 'Cloud score for 62CIHW (62% VLT) must be 4');
+        assertEqual(H.calculateCloudRating(98.0, 'Indoor, night'), 5, 'Cloud score for 98AR (98% VLT) must be 5');
+
+        // Dormant Brown Backgrounds
+        assertEqual(H.calculateBrownRating('Desert, open field', 'Amber/brown'), 5, 'Brown score for Open field/desert + Amber/brown must be 5');
+        assertEqual(H.calculateBrownRating('Open field', 'Orange'), 5, 'Brown score for Open field + Orange must be 5');
+        assertEqual(H.calculateBrownRating('Open field', 'Green'), 4, 'Brown score for Open field + Green must be 4');
+        assertEqual(H.calculateBrownRating('Green trees', 'Purple'), 2, 'Brown score for Green trees without open field must be 2');
+      });
+
+      // Group 4: Weighted Composite Score & Normalization
+      group('4. Weighted Composite Scoring Engine', ({ assert, assertEqual }) => {
+        // Equal weighting: 33.33, 33.33, 33.34
+        const scoreEqual = H.calculateCompositeScore(5, 1, 5, { sun: 33.33, cloud: 33.33, brown: 33.34 });
+        assertEqual(scoreEqual, 3.67, 'Equal weight composite of (5, 1, 5) is 3.67');
+
+        // Single condition priority 100% sun
+        const scoreSunOnly = H.calculateCompositeScore(5, 1, 2, { sun: 100, cloud: 0, brown: 0 });
+        assertEqual(scoreSunOnly, 5.0, '100% Sun weight returns pure sun rating (5.0)');
+
+        // Preset verification
+        const sunPreset = H.WEIGHT_PRESETS.sun.weights;
+        const scorePreset = H.calculateCompositeScore(5, 1, 5, sunPreset);
+        assertEqual(scorePreset, 4.4, 'Bright Sun preset composite calculation');
+
+        // Zero-Weight Safety Handling
+        const zeroScore = H.calculateCompositeScore(5, 5, 5, { sun: 0, cloud: 0, brown: 0 });
+        assertEqual(zeroScore, 0.0, 'Zero total weight evaluates safely to 0.0 without NaN or errors');
+
+        const normZero = H.normalizeWeights({ sun: 0, cloud: 0, brown: 0 });
+        assertEqual(normZero.total, 0, 'Zero weights normalized total is 0');
+        assertEqual(normZero.sun, 0, 'Zero weights normalized sun is 0');
+
+        // Normalization calculation
+        const norm = H.normalizeWeights({ sun: 50, cloud: 25, brown: 25 });
+        assertEqual(norm.sun, 50, 'Sun percentage normalized to 50%');
+        assertEqual(norm.cloud, 25, 'Cloud percentage normalized to 25%');
+        assertEqual(norm.brown, 25, 'Brown percentage normalized to 25%');
+        assertEqual(norm.total, 100, 'Sum equals 100');
+      });
+
+      // Group 5: Immutability of Original Lens Data
+      group('5. Data Immutability During Personalization', ({ assert, assertEqual }) => {
+        const original = { id: 'TEST', vlt: 50, env: 'Open field', light: 'Medium', color: 'Orange' };
+        const enriched1 = H.enrichLens(original, { sun: 100, cloud: 0, brown: 0 });
+        const enriched2 = H.enrichLens(original, { sun: 0, cloud: 100, brown: 0 });
+
+        assert(original.composite === undefined, 'Original object must not have composite field added');
+        assertEqual(enriched1.composite, 3.0, 'Enriched 1 has composite 3.0');
+        assertEqual(enriched2.composite, 3.0, 'Enriched 2 has composite 3.0');
+        assert(enriched1 !== original, 'enrichLens returns new object instance');
+      });
+
+      // Group 6: Comparison Manager Constraints
+      group('6. Comparison Constraints (Max 4 Lenses)', ({ assert, assertEqual }) => {
+        const dummyCatalog = [
+          { id: 'L1', vlt: 10 }, { id: 'L2', vlt: 20 }, { id: 'L3', vlt: 30 },
+          { id: 'L4', vlt: 40 }, { id: 'L5', vlt: 50 }
+        ];
+        const mgr = new Comp.ComparisonManager({
+          getLensById: (id) => dummyCatalog.find(l => l.id === id)
+        });
+
+        assertEqual(mgr.selectedIds.size, 0, 'Initial selection is empty');
+
+        mgr.toggleLens('L1');
+        mgr.toggleLens('L2');
+        mgr.toggleLens('L3');
+        mgr.toggleLens('L4');
+        assertEqual(mgr.selectedIds.size, 4, '4 lenses successfully selected');
+
+        // 5th lens attempt should fail
+        const allowed = mgr.toggleLens('L5');
+        assertEqual(allowed, false, '5th lens selection blocked');
+        assertEqual(mgr.selectedIds.size, 4, 'Selection remains capped at 4');
+
+        // Remove 1 lens
+        mgr.removeLens('L1');
+        assertEqual(mgr.selectedIds.size, 3, 'Removing lens decreases count to 3');
+        assert(!mgr.isSelected('L1'), 'L1 is no longer selected');
+
+        // Clear all
+        mgr.clearAll();
+        assertEqual(mgr.selectedIds.size, 0, 'clearAll empties selection');
+      });
+
+      // Group 7: CSV Exporter RFC-4180 Compliance
+      group('7. CSV Export & Quotation Escaping', ({ assert, assertEqual }) => {
+        assertEqual(Export.escapeCsvCell('Simple'), '"Simple"', 'Simple cell quoted');
+        assertEqual(Export.escapeCsvCell('Contains, comma'), '"Contains, comma"', 'Comma escaped');
+        assertEqual(Export.escapeCsvCell('Quote "test"'), '"Quote ""test"""', 'Quotes escaped by doubling');
+        assertEqual(Export.escapeCsvCell('Line1\nLine2'), '"Line1\nLine2"', 'Newline wrapped in quotes');
+
+        const csv = Export.buildCsvContent([['Col1', 'Col2'], ['Val,1', 'Val"2']]);
+        assert(csv.startsWith('\uFEFF'), 'CSV starts with UTF-8 BOM for Excel compatibility');
+        assert(csv.includes('\r\n'), 'CSV uses standard CRLF row delimiters');
+      });
+
+      renderResults();
+    }
+
+    function renderResults() {
+      const summaryEl = document.getElementById('summaryBox');
+      const outputEl = document.getElementById('testOutput');
+
+      summaryEl.innerHTML = `
+        <div>Total Tests: <strong>${totalTests}</strong></div>
+        <div class="badge-pass">Passed: <strong>${passedTests}</strong></div>
+        <div class="${failedTests > 0 ? 'badge-fail' : ''}">Failed: <strong>${failedTests}</strong></div>
+      `;
+
+      outputEl.innerHTML = testGroups.map(g => `
+        <div class="test-group">
+          <div class="group-header">${g.name}</div>
+          ${g.tests.map(t => `
+            <div class="test-item">
+              <div>
+                <span>${t.desc}</span>
+                ${t.error ? `<div class="error-details">${t.error}</div>` : ''}
+              </div>
+              <span class="status-tag ${t.passed ? 'status-pass' : 'status-fail'}">
+                ${t.passed ? 'PASS' : 'FAIL'}
+              </span>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('btnRerun')?.addEventListener('click', runSuite);
+    runSuite();
+  </script>
+</body>
+</html>
