@@ -228,45 +228,45 @@
 
         <div id="errorMessage" style="display: none;"></div>
 
-        <!-- Table View -->
-        <div id="tableContainer" class="table-scroll-container">
-          <table class="lens-table">
+        <!-- Table View (Desktop & Tablet) -->
+        <div id="tableContainer" class="table-compact-container">
+          <table class="lens-table lens-table-compact">
             <thead>
               <!-- Top Category Header Group -->
               <tr>
-                <th colspan="8" class="th-group-published">
-                  📋 Manufacturer & Dealer Published Specifications
+                <th colspan="4" class="th-group-published">
+                  📋 Published Specs
                 </th>
                 <th colspan="4" class="th-group-heuristic">
-                  🧮 Estimated Screening Ratings (Calculated Heuristics — Not Certified)
+                  🧮 Estimated Screening Ratings
+                </th>
+                <th class="th-group-actions">
+                  More
                 </th>
               </tr>
               <!-- Column Sortable Headers -->
               <tr>
-                <th class="th-not-sortable col-center" style="width: 50px;">Compare</th>
-                <th data-sort-col="id">Lens ID <span class="sort-arrow">↕</span></th>
-                <th data-sort-col="vlt">VLT <span class="sort-arrow">↕</span></th>
-                <th class="th-not-sortable">Technology</th>
-                <th class="th-not-sortable">Color Profile</th>
-                <th class="th-not-sortable">Documented Environments</th>
-                <th class="th-not-sortable">Documented Lighting</th>
-                <th class="th-not-sortable">Source</th>
-                <th data-sort-col="composite" class="col-composite-score">
+                <th class="th-not-sortable col-center col-check-th">Compare</th>
+                <th data-sort-col="id" class="col-id-th">Lens ID <span class="sort-arrow">↕</span></th>
+                <th data-sort-col="vlt" class="col-vlt-th">VLT <span class="sort-arrow">↕</span></th>
+                <th class="th-not-sortable col-tech-th">Technology</th>
+                <th data-sort-col="composite" class="col-composite-score col-composite-th">
                   Personalized <span class="sort-arrow">▼</span>
                 </th>
-                <th data-sort-col="sun" class="col-score">☀ Sun <span class="sort-arrow">↕</span></th>
-                <th data-sort-col="cloud" class="col-score">☁ Overcast <span class="sort-arrow">↕</span></th>
-                <th data-sort-col="brown" class="col-score">🌾 Brown <span class="sort-arrow">↕</span></th>
+                <th data-sort-col="sun" class="col-score col-score-th">☀ Sun <span class="sort-arrow">↕</span></th>
+                <th data-sort-col="cloud" class="col-score col-score-th">☁ Overcast <span class="sort-arrow">↕</span></th>
+                <th data-sort-col="brown" class="col-score col-score-th">🌾 Brown <span class="sort-arrow">↕</span></th>
+                <th class="th-not-sortable col-center col-expand-th">Specs</th>
               </tr>
             </thead>
             <tbody id="tableRows">
-              <!-- Rendered via app.js -->
+              <!-- Rendered via app.js with main rows + expandable detail rows -->
             </tbody>
           </table>
         </div>
 
-        <!-- Cards View (for Mobile or Alternate View) -->
-        <div id="cardsContainer" class="cards-grid" style="display: none;">
+        <!-- Cards View (Mobile Automatic Layout & Optional Desktop View) -->
+        <div id="cardsContainer" class="cards-grid">
           <!-- Rendered via app.js -->
         </div>
 
@@ -403,6 +403,7 @@ Composite Score = (W_sun × Sun + W_cloud × Cloud + W_brown × Brown) / (W_sun 
   </footer>
 
   <!-- Application Scripts (UMD Universal Compatibility) -->
+  <script src="data/pilla_lenses_data.js"></script>
   <script src="js/heuristics.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/export.js"></script>

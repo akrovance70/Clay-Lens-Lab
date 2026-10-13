@@ -24,6 +24,16 @@
     'clear': 'linear-gradient(135deg, #e0e0e0, #ffffff)'
   };
 
+  const TECH_DESCRIPTIONS = {
+    'ED': 'Enhanced Definition — High definition color profiling for crisp target edge separation',
+    'HC': 'High Contrast — Accelerates target contrast against foliage and backgrounds',
+    'MX': 'Max Orange — Maximizes target orange registration against backgrounds',
+    'N': 'Neutralizer — Subdues green background foliage to make targets pop',
+    'AR': 'Anti-reflective — Clear optical transmission for indoor/night shooting',
+    'MX + N': 'Max Orange + Neutralizer hybrid — Boosts orange while calming green backgrounds',
+    'N · color deficiency': 'Neutralizer with specialized tuning for color vision deficiency'
+  };
+
   function getColorGradient(color) {
     const c = String(color || '').toLowerCase().trim();
     for (const [key, grad] of Object.entries(COLOR_SWATCH_MAP)) {
@@ -44,6 +54,13 @@
     }[c]));
   }
 
+  function getTechDescription(tech, verificationStatus) {
+    if (verificationStatus === 'disputed_classification' || String(tech).includes('*')) {
+      return 'Conflicting distributor classification: CMOS is traditionally Chromashift Max Orange, but was indexed under High Contrast in dealer charts.';
+    }
+    return TECH_DESCRIPTIONS[tech] || `Technology formulation: ${tech}`;
+  }
+
   function renderScoreBadge(score, isComposite = false) {
     if (score === null || score === undefined || isNaN(score)) {
       return `<span class="score-badge score-none">—</span>`;
@@ -60,18 +77,8 @@
   }
 
   function renderTechBadge(tech, verificationStatus) {
-    const descriptions = {
-      'ED': 'Enhanced Definition — High definition color profiling for crisp target edge separation',
-      'HC': 'High Contrast — Accelerates target contrast against foliage and backgrounds',
-      'MX': 'Max Orange — Maximizes target orange registration against backgrounds',
-      'N': 'Neutralizer — Subdues green background foliage to make targets pop',
-      'AR': 'Anti-reflective — Clear optical transmission for indoor/night shooting'
-    };
-
-    const isDisputed = verificationStatus === 'disputed_classification' || tech.includes('*');
-    const tooltip = isDisputed 
-      ? 'Conflicting distributor classification: CMOS is traditionally Chromashift Max Orange, but was indexed under High Contrast in dealer charts.'
-      : (descriptions[tech] || `Technology formulation: ${tech}`);
+    const isDisputed = verificationStatus === 'disputed_classification' || String(tech).includes('*');
+    const tooltip = getTechDescription(tech, verificationStatus);
 
     return `<span class="tech-badge ${isDisputed ? 'tech-disputed' : ''}" title="${esc(tooltip)}">
       ${esc(tech)}
@@ -105,7 +112,7 @@
       return `
         <a href="${esc(lens.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link" title="Open source reference in new tab (${label}, verified ${lens.verifiedDate || 'recent'})">
           <span>${esc(label)}</span>
-          <svg class="icon-external" viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true">
+          <svg class="icon-external" viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true">
             <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0V3.707L4.854 9.854a.5.5 0 1 1-.708-.708L10.293 3H4.5a.5.5 0 0 1-.5-.5z"/>
             <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 1 0v3a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 2 12.5v-8z"/>
           </svg>
@@ -116,14 +123,56 @@
     return `<span class="source-tag">${esc(label)}</span>`;
   }
 
+  function renderDetailContent(lens) {
+    return `
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Color Profile</span>
+          <div class="detail-value detail-color-val">
+            <span class="color-swatch-sm" style="background: ${getColorGradient(lens.color)}"></span>
+            <strong>${esc(lens.color)}</strong>
+          </div>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Documented Environments</span>
+          <div class="detail-value">${esc(lens.env)}</div>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Documented Lighting</span>
+          <div class="detail-value">${esc(lens.light)}</div>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Filtration Technology & Notes</span>
+          <div class="detail-value">
+            ${renderTechBadge(lens.tech, lens.verificationStatus)}
+            <span class="detail-tech-desc">${esc(getTechDescription(lens.tech, lens.verificationStatus))}</span>
+          </div>
+        </div>
+        <div class="detail-item detail-item-wide">
+          <span class="detail-label">Data Provenance & Source Audit</span>
+          <div class="detail-value detail-source-val">
+            ${renderSourceBadge(lens)}
+            <span class="audit-meta">
+              Verification: <strong>${esc(lens.verificationStatus)}</strong> · 
+              Audited: ${esc(lens.verifiedDate || 'Unverified')}
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   const moduleObj = {
     COLOR_SWATCH_MAP,
+    TECH_DESCRIPTIONS,
     getColorGradient,
     esc,
+    getTechDescription,
     renderScoreBadge,
     renderTechBadge,
     renderVltBar,
-    renderSourceBadge
+    renderSourceBadge,
+    renderDetailContent
   };
 
   global.ClayLensUI = moduleObj;

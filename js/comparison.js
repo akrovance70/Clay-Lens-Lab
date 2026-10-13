@@ -1,5 +1,6 @@
 /**
  * Clay Lens Lab — 4-Lens Side-by-Side Comparison Comparator
+ * Responsive Matrix (Desktop) + Mobile Deck (No horizontal overflow)
  */
 
 (function(global) {
@@ -86,7 +87,7 @@
           </div>
           <div class="compare-actions">
             <button class="btn btn-secondary btn-sm" id="btnExportCompare" title="Download side-by-side comparison matrix as CSV">
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+              <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
               Export Comparison (CSV)
             </button>
             <button class="btn btn-ghost btn-sm" id="btnClearCompare" title="Clear all selected lenses">
@@ -95,7 +96,8 @@
           </div>
         </div>
 
-        <div class="compare-table-wrapper">
+        <!-- Desktop Comparison Table Matrix -->
+        <div class="compare-table-wrapper compare-desktop-only">
           <table class="compare-matrix-table">
             <thead>
               <tr>
@@ -118,12 +120,12 @@
                 <td colspan="${lenses.length + 1}">
                   <div class="group-divider-inner">
                     <span class="divider-icon">📋</span>
-                    <span>Published Specifications (Official / Dealer Documentation)</span>
+                    <span>Published Specifications</span>
                   </div>
                 </td>
               </tr>
               <tr>
-                <td class="metric-label">Visible Light Transmission (VLT)</td>
+                <td class="metric-label">Visible Light Transmission</td>
                 ${lenses.map(l => `<td>${ui.renderVltBar(l.vlt)}</td>`).join('')}
               </tr>
               <tr>
@@ -163,14 +165,13 @@
                 <td colspan="${lenses.length + 1}">
                   <div class="group-divider-inner">
                     <span class="divider-icon">🧮</span>
-                    <span>Estimated Screening Ratings (Calculated Heuristics — Not Certified)</span>
+                    <span>Estimated Screening Ratings (Heuristics)</span>
                   </div>
                 </td>
               </tr>
               <tr class="row-highlight-composite">
                 <td class="metric-label">
-                  <strong>Personalized Composite Score</strong>
-                  <div class="label-subtext">Weighted by active user preferences</div>
+                  <strong>Personalized Heuristic</strong>
                 </td>
                 ${lenses.map(l => `<td>${ui.renderScoreBadge(l.composite, true)}</td>`).join('')}
               </tr>
@@ -183,14 +184,62 @@
                 ${lenses.map(l => `<td>${ui.renderScoreBadge(l.cloud)}</td>`).join('')}
               </tr>
               <tr>
-                <td class="metric-label">
-                  🌾 Dormant Brown Backgrounds (1-5)
-                  <div class="label-subtext">Exploratory heuristic; unverified</div>
-                </td>
+                <td class="metric-label">🌾 Dormant Brown (1-5)</td>
                 ${lenses.map(l => `<td>${ui.renderScoreBadge(l.brown)}</td>`).join('')}
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Mobile Comparison Deck (Vertical Stacking, No Horizontal Overflow) -->
+        <div class="compare-mobile-deck compare-mobile-only">
+          ${lenses.map(l => `
+            <div class="compare-mobile-card">
+              <div class="compare-card-top">
+                <div class="compare-card-title">
+                  <span class="color-swatch-circle" style="background: ${ui.getColorGradient(l.color)}"></span>
+                  <strong class="matrix-lens-id">${ui.esc(l.id)}</strong>
+                  <span class="compare-card-vlt">${l.vlt}% VLT</span>
+                </div>
+                <button class="btn-remove-compare" data-remove-id="${ui.esc(l.id)}" title="Remove ${ui.esc(l.id)} from comparison">✕ Remove</button>
+              </div>
+
+              <div class="compare-mobile-scores">
+                <div class="compare-score-box">
+                  <span class="compare-score-label">Personalized:</span>
+                  ${ui.renderScoreBadge(l.composite, true)}
+                </div>
+                <div class="compare-score-row">
+                  <span>☀ Sun: ${ui.renderScoreBadge(l.sun)}</span>
+                  <span>☁ Overcast: ${ui.renderScoreBadge(l.cloud)}</span>
+                  <span>🌾 Brown: ${ui.renderScoreBadge(l.brown)}</span>
+                </div>
+              </div>
+
+              <div class="compare-mobile-specs">
+                <div class="spec-line">
+                  <span class="spec-label">Tech:</span>
+                  <span>${ui.renderTechBadge(l.tech, l.verificationStatus)}</span>
+                </div>
+                <div class="spec-line">
+                  <span class="spec-label">Color:</span>
+                  <span>${ui.esc(l.color)}</span>
+                </div>
+                <div class="spec-line">
+                  <span class="spec-label">Environments:</span>
+                  <span>${ui.esc(l.env)}</span>
+                </div>
+                <div class="spec-line">
+                  <span class="spec-label">Lighting:</span>
+                  <span>${ui.esc(l.light)}</span>
+                </div>
+                <div class="spec-line">
+                  <span class="spec-label">Source:</span>
+                  <span>${ui.renderSourceBadge(l)}</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
         </div>
       `;
 

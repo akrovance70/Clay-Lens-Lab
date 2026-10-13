@@ -1,5 +1,6 @@
 /**
  * Clay Lens Lab — Main Application Controller
+ * Optimized Compact Responsive Table + Expandable Details + Mobile Stacked Cards
  */
 
 (function(global) {
@@ -23,7 +24,8 @@
         key: 'composite',
         dir: 'desc'
       };
-      this.viewMode = 'table';
+      this.expandedIds = new Set(); // Tracks expanded detail rows/cards
+      this.desktopView = 'table'; // 'table' or 'cards' (for desktop toggle)
 
       this.comparison = new Comp.ComparisonManager({
         onSelectionChange: () => this.handleComparisonChange(),
@@ -35,7 +37,7 @@
     }
 
     setupIframeResizer() {
-      if (window.self === window.top) return; // Running top-level standalone
+      if (window.self === window.top) return;
       document.documentElement.classList.add('is-embedded');
 
       const postHeight = () => {
@@ -50,7 +52,7 @@
             height: height
           }, '*');
         } catch (e) {
-          // Gracefully ignore cross-origin sandboxing restrictions
+          // Cross-origin fallback
         }
       };
 
@@ -69,12 +71,24 @@
 
       try {
         this.showLoading(true);
-        const res = await fetch('data/pilla_lenses.json');
-        if (!res.ok) throw new Error(`HTTP error loading catalog: ${res.status}`);
-        this.rawLenses = await res.json();
-        this.showLoading(false);
-        this.render();
+        if (window.PILLA_LENSES_DATA && Array.isArray(window.PILLA_LENSES_DATA) && window.PILLA_LENSES_DATA.length > 0) {
+          this.rawLenses = window.PILLA_LENSES_DATA;
+          this.showLoading(false);
+          this.render();
+        } else {
+          const res = await fetch('data/pilla_lenses.json');
+          if (!res.ok) throw new Error(`HTTP error loading catalog: ${res.status}`);
+          this.rawLenses = await res.json();
+          this.showLoading(false);
+          this.render();
+        }
       } catch (err) {
+        if (window.PILLA_LENSES_DATA && Array.isArray(window.PILLA_LENSES_DATA) && window.PILLA_LENSES_DATA.length > 0) {
+          this.rawLenses = window.PILLA_LENSES_DATA;
+          this.showLoading(false);
+          this.render();
+          return;
+        }
         console.warn('Automatic fetch failed (likely running on file:// protocol without HTTP server):', err);
         this.showLoading(false);
         this.showLocalFileFallback();
@@ -111,7 +125,7 @@
               try {
                 this.rawLenses = JSON.parse(evt.target.result);
                 errorEl.style.display = 'none';
-                this.bootstrap();
+                this.render();
               } catch (parseErr) {
                 alert('Invalid JSON file selected: ' + parseErr.message);
               }
@@ -126,12 +140,6 @@
       this.rawLenses = lenses;
       const errorEl = document.getElementById('errorMessage');
       if (errorEl) errorEl.style.display = 'none';
-      this.bootstrap();
-    }
-
-    bootstrap() {
-      this.bindEvents();
-      this.updateWeightUi();
       this.render();
     }
 
@@ -281,6 +289,26 @@
         Export.exportFilteredLensesCsv(filtered, H.normalizeWeights(this.weights));
       });
 
+      // Desktop View Mode Toggle (Table vs Cards)
+      const btnTable = document.getElementById('btnViewTable');
+      const btnCards = document.getElementById('btnViewCards');
+      btnTable?.addEventListener('click', () => {
+        this.desktopView = 'table';
+        btnTable.classList.add('active');
+        btnCards?.classList.remove('active');
+        this.applyViewMode();
+      });
+      btnCards?.addEventListener('click', () => {
+        this.desktopView = 'cards';
+        btnCards.classList.add('active');
+        btnTable?.classList.remove('active');
+        this.applyViewMode();
+      });
+
+      window.addEventListener('resize', () => {
+        this.applyViewMode();
+      });
+
       ['sun', 'cloud', 'brown'].forEach(key => {
         const slider = document.getElementById(`weightSlider_${key}`);
         const numInput = document.getElementById(`weightNum_${key}`);
@@ -322,6 +350,7 @@
         this.render();
       });
 
+      // Table Header click sorting
       document.querySelectorAll('th[data-sort-col]').forEach(th => {
         th.addEventListener('click', (e) => {
           const col = e.currentTarget.getAttribute('data-sort-col');
@@ -340,6 +369,7 @@
         });
       });
 
+      // Table events: compare toggle and detail row toggle
       const tableBody = document.getElementById('tableRows');
       tableBody?.addEventListener('change', (e) => {
         if (e.target.matches('input[data-compare-id]')) {
@@ -351,17 +381,47 @@
         }
       });
 
-      document.getElementById('btnViewTable')?.addEventListener('click', () => {
-        this.viewMode = 'table';
-        this.updateViewModeButtons();
-        this.render();
-      });
-      document.getElementById('btnViewCards')?.addEventListener('click', () => {
-        this.viewMode = 'cards';
-        this.updateViewModeButtons();
-        this.render();
+      tableBody?.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('[data-toggle-detail]');
+        if (toggleBtn) {
+          const id = toggleBtn.getAttribute('data-toggle-detail');
+          if (this.expandedIds.has(id)) {
+            this.expandedIds.delete(id);
+          } else {
+            this.expandedIds.add(id);
+          }
+          this.render();
+          return;
+        }
       });
 
+      // Cards events: compare toggle and card accordion toggle
+      const cardsContainer = document.getElementById('cardsContainer');
+      cardsContainer?.addEventListener('change', (e) => {
+        if (e.target.matches('input[data-compare-id]')) {
+          const id = e.target.getAttribute('data-compare-id');
+          const success = this.comparison.toggleLens(id);
+          if (!success) {
+            e.target.checked = false;
+          }
+        }
+      });
+
+      cardsContainer?.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('[data-toggle-card-detail]');
+        if (toggleBtn) {
+          const id = toggleBtn.getAttribute('data-toggle-card-detail');
+          if (this.expandedIds.has(id)) {
+            this.expandedIds.delete(id);
+          } else {
+            this.expandedIds.add(id);
+          }
+          this.render();
+          return;
+        }
+      });
+
+      // Modal
       const modal = document.getElementById('methodologyModal');
       const openModalBtn = document.getElementById('btnOpenMethodology');
       const closeModalBtn = document.getElementById('btnCloseMethodology');
@@ -382,13 +442,6 @@
         const p = b.getAttribute('data-preset');
         b.classList.toggle('active', p === this.activePreset);
       });
-    }
-
-    updateViewModeButtons() {
-      const btnTable = document.getElementById('btnViewTable');
-      const btnCards = document.getElementById('btnViewCards');
-      btnTable?.classList.toggle('active', this.viewMode === 'table');
-      btnCards?.classList.toggle('active', this.viewMode === 'cards');
     }
 
     updateWeightUi() {
@@ -420,6 +473,10 @@
         const id = cb.getAttribute('data-compare-id');
         cb.checked = this.comparison.isSelected(id);
       });
+
+      if (this.postHeight) {
+        requestAnimationFrame(() => this.postHeight());
+      }
     }
 
     render() {
@@ -429,21 +486,11 @@
         countEl.textContent = `Showing ${filtered.length} of ${this.rawLenses.length} Outlaw lenses`;
       }
 
-      const tableContainer = document.getElementById('tableContainer');
-      const cardsContainer = document.getElementById('cardsContainer');
-
-      if (this.viewMode === 'table') {
-        if (tableContainer) tableContainer.style.display = 'block';
-        if (cardsContainer) cardsContainer.style.display = 'none';
-        this.renderTable(filtered);
-      } else {
-        if (tableContainer) tableContainer.style.display = 'none';
-        if (cardsContainer) cardsContainer.style.display = 'grid';
-        this.renderCards(filtered);
-      }
-
+      this.renderTable(filtered);
+      this.renderCards(filtered);
       this.comparison.render(document.getElementById('comparisonContainer'));
 
+      // Update sort indicators
       document.querySelectorAll('th[data-sort-col]').forEach(th => {
         const col = th.getAttribute('data-sort-col');
         const arrow = th.querySelector('.sort-arrow');
@@ -456,8 +503,29 @@
         }
       });
 
+      this.applyViewMode();
+
       if (this.postHeight) {
         requestAnimationFrame(() => this.postHeight());
+      }
+    }
+
+    applyViewMode() {
+      const tableContainer = document.getElementById('tableContainer');
+      const cardsContainer = document.getElementById('cardsContainer');
+      if (!tableContainer || !cardsContainer) return;
+
+      if (window.innerWidth <= 768) {
+        tableContainer.style.display = 'none';
+        cardsContainer.style.display = 'flex';
+      } else {
+        if (this.desktopView === 'cards') {
+          tableContainer.style.display = 'none';
+          cardsContainer.style.display = 'grid';
+        } else {
+          tableContainer.style.display = 'block';
+          cardsContainer.style.display = 'none';
+        }
       }
     }
 
@@ -468,7 +536,7 @@
       if (lenses.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="12" class="no-results" style="text-align: center; padding: 32px 16px;">
+            <td colspan="9" class="no-results" style="text-align: center; padding: 32px 16px;">
               <div class="empty-state">
                 <span style="font-size: 28px;">🔍</span>
                 <p><strong>No lenses match the active filter criteria.</strong></p>
@@ -482,9 +550,11 @@
 
       tbody.innerHTML = lenses.map(l => {
         const isChecked = this.comparison.isSelected(l.id);
+        const isExpanded = this.expandedIds.has(l.id);
+
         return `
-          <tr class="${isChecked ? 'row-selected' : ''}">
-            <td class="col-center">
+          <tr class="main-table-row ${isChecked ? 'row-selected' : ''} ${isExpanded ? 'row-expanded' : ''}">
+            <td class="col-check col-center">
               <input 
                 type="checkbox" 
                 class="compare-check" 
@@ -503,21 +573,33 @@
                 <strong class="lens-code">${UI.esc(l.id)}</strong>
               </div>
             </td>
-            <td>${UI.renderVltBar(l.vlt)}</td>
-            <td>${UI.renderTechBadge(l.tech, l.verificationStatus)}</td>
-            <td class="col-color-profile">
-              <span class="color-text">${UI.esc(l.color)}</span>
-            </td>
-            <td class="col-env"><span class="env-text">${UI.esc(l.env)}</span></td>
-            <td class="col-light">${UI.esc(l.light)}</td>
-            <td class="col-source">${UI.renderSourceBadge(l)}</td>
+            <td class="col-vlt">${UI.renderVltBar(l.vlt)}</td>
+            <td class="col-tech">${UI.renderTechBadge(l.tech, l.verificationStatus)}</td>
             <td class="col-score col-composite-score">
               ${UI.renderScoreBadge(l.composite, true)}
             </td>
             <td class="col-score">${UI.renderScoreBadge(l.sun)}</td>
             <td class="col-score">${UI.renderScoreBadge(l.cloud)}</td>
             <td class="col-score">${UI.renderScoreBadge(l.brown)}</td>
+            <td class="col-expand col-center">
+              <button 
+                class="btn-toggle-detail ${isExpanded ? 'active' : ''}" 
+                data-toggle-detail="${UI.esc(l.id)}" 
+                aria-expanded="${isExpanded ? 'true' : 'false'}"
+                title="View secondary specifications, lighting, environments, and source provenance"
+              >
+                <span>${isExpanded ? 'Hide' : 'Details'}</span>
+                <span class="detail-caret">${isExpanded ? '▴' : '▾'}</span>
+              </button>
+            </td>
           </tr>
+          ${isExpanded ? `
+            <tr class="detail-drawer-row">
+              <td colspan="9" class="detail-cell">
+                ${UI.renderDetailContent(l)}
+              </td>
+            </tr>
+          ` : ''}
         `;
       }).join('');
     }
@@ -541,69 +623,71 @@
 
       container.innerHTML = lenses.map(l => {
         const isChecked = this.comparison.isSelected(l.id);
+        const isExpanded = this.expandedIds.has(l.id);
+
         return `
-          <article class="lens-card ${isChecked ? 'card-selected' : ''}">
-            <div class="card-header">
-              <div class="card-header-left">
+          <article class="lens-mobile-card ${isChecked ? 'card-selected' : ''}">
+            <div class="mcard-top-row">
+              <div class="mcard-brand-group">
                 <span class="color-swatch-circle" style="background: ${UI.getColorGradient(l.color)}" title="Illustrative: ${UI.esc(l.color)}"></span>
                 <div>
-                  <strong class="card-title">${UI.esc(l.id)}</strong>
-                  <div class="card-subtitle">${UI.esc(l.color)} · ${UI.renderTechBadge(l.tech, l.verificationStatus)}</div>
+                  <strong class="mcard-id">${UI.esc(l.id)}</strong>
+                  <div class="mcard-tech-wrap">${UI.renderTechBadge(l.tech, l.verificationStatus)}</div>
                 </div>
               </div>
-              <label class="card-compare-label">
-                <input 
-                  type="checkbox" 
-                  class="compare-check" 
-                  data-compare-id="${UI.esc(l.id)}" 
-                  ${isChecked ? 'checked' : ''}
-                />
-                <span>Compare</span>
-              </label>
+              <div class="mcard-top-right">
+                <div class="mcard-vlt-badge"><strong>${l.vlt}%</strong> VLT</div>
+                <label class="mcard-compare-label">
+                  <input 
+                    type="checkbox" 
+                    class="compare-check" 
+                    data-compare-id="${UI.esc(l.id)}" 
+                    ${isChecked ? 'checked' : ''}
+                  />
+                  <span>Compare</span>
+                </label>
+              </div>
             </div>
 
-            <div class="card-body">
-              <div class="card-vlt-row">
-                <span class="card-label">Transmission:</span>
-                ${UI.renderVltBar(l.vlt)}
+            <!-- Scores Strip -->
+            <div class="mcard-scores-strip">
+              <div class="mscore-composite-box">
+                <span class="mscore-label">Personalized:</span>
+                ${UI.renderScoreBadge(l.composite, true)}
               </div>
-
-              <div class="card-meta-row">
-                <span class="card-label">Lighting:</span>
-                <span>${UI.esc(l.light)}</span>
-              </div>
-
-              <div class="card-meta-row">
-                <span class="card-label">Environments:</span>
-                <span>${UI.esc(l.env)}</span>
-              </div>
-
-              <div class="card-meta-row">
-                <span class="card-label">Source:</span>
-                <span>${UI.renderSourceBadge(l)}</span>
-              </div>
-
-              <div class="card-scores-section">
-                <div class="card-composite-box">
-                  <span class="composite-label">Personalized Heuristic:</span>
-                  ${UI.renderScoreBadge(l.composite, true)}
+              <div class="mscore-group">
+                <div class="mscore-item">
+                  <span class="mscore-item-title">☀ Sun</span>
+                  ${UI.renderScoreBadge(l.sun)}
                 </div>
-                <div class="card-subscores">
-                  <div class="subscore-item">
-                    <span>☀ Sun</span>
-                    ${UI.renderScoreBadge(l.sun)}
-                  </div>
-                  <div class="subscore-item">
-                    <span>☁ Overcast</span>
-                    ${UI.renderScoreBadge(l.cloud)}
-                  </div>
-                  <div class="subscore-item">
-                    <span>🌾 Brown</span>
-                    ${UI.renderScoreBadge(l.brown)}
-                  </div>
+                <div class="mscore-item">
+                  <span class="mscore-item-title">☁ Cloud</span>
+                  ${UI.renderScoreBadge(l.cloud)}
+                </div>
+                <div class="mscore-item">
+                  <span class="mscore-item-title">🌾 Brown</span>
+                  ${UI.renderScoreBadge(l.brown)}
                 </div>
               </div>
             </div>
+
+            <!-- Expand Accordion Button -->
+            <div class="mcard-accordion-toggle">
+              <button 
+                class="btn-card-accordion ${isExpanded ? 'active' : ''}" 
+                data-toggle-card-detail="${UI.esc(l.id)}"
+                aria-expanded="${isExpanded ? 'true' : 'false'}"
+              >
+                <span>${isExpanded ? 'Hide Specifications & Provenance' : 'Specifications, Lighting & Sources'}</span>
+                <span>${isExpanded ? '▴' : '▾'}</span>
+              </button>
+            </div>
+
+            ${isExpanded ? `
+              <div class="mcard-expanded-body">
+                ${UI.renderDetailContent(l)}
+              </div>
+            ` : ''}
           </article>
         `;
       }).join('');

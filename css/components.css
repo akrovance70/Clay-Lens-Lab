@@ -273,23 +273,27 @@
 }
 
 /* ==========================================================================
-   Primary Lens Data Table
+   Primary Lens Data Table & Compact Container
    ========================================================================== */
-.table-scroll-container {
-  overflow-x: auto;
+.table-scroll-container,
+.table-compact-container {
+  width: 100%;
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
   background: #ffffff;
   box-shadow: var(--shadow-sm);
   position: relative;
+  overflow: hidden;
 }
 
-.lens-table {
+.lens-table,
+.lens-table-compact {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 13px;
   text-align: left;
+  table-layout: auto;
 }
 
 /* Table Header Group Rows */
@@ -314,9 +318,164 @@
   letter-spacing: 0.8px;
   padding: 8px 12px;
   border-bottom: 2px solid #fcd34d;
+  border-right: 2px solid #cbd5e1;
 }
 
-.lens-table th {
+.th-group-actions {
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 8px 10px;
+  border-bottom: 2px solid #cbd5e1;
+  text-align: center;
+}
+
+/* Compact Column Width Rules */
+.col-check-th, .col-check {
+  width: 48px;
+  text-align: center;
+  padding-left: 8px !important;
+  padding-right: 6px !important;
+}
+
+.col-id-th, .col-lens-id {
+  width: 90px;
+  white-space: nowrap;
+}
+
+.col-vlt-th, .col-vlt {
+  min-width: 80px;
+  max-width: 110px;
+}
+
+.col-tech-th, .col-tech {
+  width: 65px;
+  white-space: nowrap;
+}
+
+.col-composite-th, .col-composite-score {
+  min-width: 90px;
+  text-align: center;
+  background: #fefce8 !important;
+}
+
+.col-score-th, .col-score {
+  width: 65px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.col-expand-th, .col-expand {
+  width: 78px;
+  text-align: center;
+  white-space: nowrap;
+  padding-right: 8px !important;
+}
+
+/* Detail Expander Toggle Button */
+.btn-toggle-detail {
+  background: #ffffff;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.btn-toggle-detail:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.btn-toggle-detail.active {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.detail-caret {
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* Expandable Detail Drawer Row */
+.detail-drawer-row td.detail-cell {
+  background: #f8fafc;
+  padding: 14px 18px;
+  border-top: 1px dashed #cbd5e1;
+  border-bottom: 2px solid #e2e8f0;
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.03);
+}
+
+.main-table-row.row-expanded td {
+  border-bottom-color: transparent !important;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 18px;
+  font-size: 12.5px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-item-wide {
+  grid-column: 1 / -1;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.detail-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-text-muted);
+}
+
+.detail-value {
+  color: var(--color-text-main);
+  line-height: 1.4;
+}
+
+.detail-color-val {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-tech-desc {
+  display: block;
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.detail-source-val {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lens-table th,
+.lens-table-compact th {
   position: sticky;
   top: 0;
   background: #f8fafc;
@@ -564,7 +723,7 @@
 }
 
 /* ==========================================================================
-   Card Grid View (Mobile / Alternative Layout)
+   Mobile Card View (Clean Vertical Stack, No Horizontal Scrolling)
    ========================================================================== */
 .cards-grid {
   display: grid;
@@ -573,107 +732,161 @@
   margin-top: 16px;
 }
 
+.lens-mobile-card,
 .lens-card {
   background: #ffffff;
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 14px 16px;
   box-shadow: var(--shadow-card);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  width: 100%;
+  box-sizing: border-box;
 }
 
+.lens-mobile-card:hover,
 .lens-card:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
+.lens-mobile-card.card-selected,
 .lens-card.card-selected {
   border-color: #93c5fd;
   background: #f0f7ff;
 }
 
-.card-header {
+.mcard-top-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-border-light);
+  gap: 10px;
 }
 
-.card-header-left {
+.mcard-brand-group {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.card-title {
+.mcard-id {
   font-size: 16px;
   font-family: var(--font-family-mono);
+  font-weight: 800;
   color: var(--color-text-main);
+  display: block;
+  line-height: 1.2;
 }
 
-.card-subtitle {
+.mcard-tech-wrap {
+  margin-top: 3px;
+}
+
+.mcard-top-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.mcard-vlt-badge {
+  font-family: var(--font-family-mono);
   font-size: 12px;
-  color: var(--color-text-muted);
-  margin-top: 2px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  color: #1e293b;
 }
 
-.card-compare-label {
+.mcard-compare-label {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   font-size: 12px;
   font-weight: 600;
+  color: var(--color-text-muted);
   cursor: pointer;
+  user-select: none;
 }
 
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 12px;
-}
-
-.card-vlt-row, .card-meta-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-label {
-  color: var(--color-text-subtle);
-  font-weight: 600;
-}
-
-.card-scores-section {
+.mcard-scores-strip {
   background: var(--color-bg-subtle);
   border-radius: var(--radius-sm);
-  padding: 10px;
-  margin-top: 6px;
+  padding: 10px 12px;
+  margin: 12px 0 10px;
 }
 
-.card-composite-box {
+.mscore-composite-box {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
   font-weight: 700;
+  font-size: 12.5px;
 }
 
-.card-subscores {
+.mscore-label {
+  color: var(--color-text-main);
+}
+
+.mscore-group {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   text-align: center;
 }
 
-.subscore-item {
+.mscore-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   align-items: center;
+}
+
+.mscore-item-title {
   font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.mcard-accordion-toggle {
+  margin-top: 8px;
+}
+
+.btn-card-accordion {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #ffffff;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  color: #334155;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-card-accordion:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.btn-card-accordion.active {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.mcard-expanded-body {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
 }
 
 /* ==========================================================================
@@ -849,6 +1062,104 @@
 }
 
 /* ==========================================================================
+   Mobile Comparison Deck (Stacked Cards, Zero Overflow)
+   ========================================================================== */
+.compare-mobile-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.compare-mobile-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-card);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.compare-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.compare-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compare-card-vlt {
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.compare-mobile-scores {
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.compare-score-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 12.5px;
+  margin-bottom: 8px;
+}
+
+.compare-score-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.compare-mobile-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.spec-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  border-bottom: 1px dashed #f1f5f9;
+  padding-bottom: 4px;
+}
+
+.spec-line:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.spec-label {
+  font-weight: 700;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
    Methodology & Reference Modal
    ========================================================================== */
 .modal-overlay {
@@ -940,8 +1251,17 @@
 }
 
 /* ==========================================================================
-   Responsive Adaptations
+   Responsive Adaptations & Layout Auto-Switching
    ========================================================================== */
+@media (min-width: 769px) {
+  .compare-desktop-only {
+    display: block !important;
+  }
+  .compare-mobile-only {
+    display: none !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .controls-grid {
     grid-template-columns: 1fr 1fr;
@@ -964,5 +1284,88 @@
   }
   .utility-buttons-group {
     justify-content: space-between;
+    width: 100%;
+  }
+
+  /* Automatically switch from table to vertically stacked lens cards on mobile */
+  .table-compact-container {
+    display: none !important;
+  }
+  .cards-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px;
+  }
+  .view-toggle-group {
+    display: none !important;
+  }
+
+  /* Comparison switches to mobile deck */
+  .compare-desktop-only {
+    display: none !important;
+  }
+  .compare-mobile-only {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .mode-buttons-group .btn {
+    flex: 1 1 calc(50% - 6px);
+    font-size: 11.5px;
+    padding: 7px 8px;
+    text-align: center;
+  }
+  .utility-buttons-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .utility-buttons-group .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .presets-group {
+    width: 100%;
+  }
+  .preset-chip {
+    padding: 4px 9px;
+    font-size: 11px;
+  }
+  .mscore-group {
+    gap: 4px;
+  }
+  .mcard-scores-strip {
+    padding: 8px 10px;
+  }
+  .compare-mobile-scores {
+    padding: 8px 10px;
+  }
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .mcard-top-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .mcard-top-right {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+  }
+  .compare-card-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .spec-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
   }
 }
